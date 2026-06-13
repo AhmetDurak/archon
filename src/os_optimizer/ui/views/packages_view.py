@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 
 from os_optimizer.core.interfaces import IPackageManager
 from os_optimizer.sudo_session import SudoSession
+from os_optimizer.ui import strings
 from os_optimizer.ui.update_dialog import UpdateDialog
 
 
@@ -34,25 +35,26 @@ class PackagesView(QWidget):
         self._fetch()
 
     def _setup_ui(self):
+        s = strings.get()
         root = QVBoxLayout(self)
         root.setSpacing(16)
 
-        title = QLabel("Packages")
+        title = QLabel(s.pkg_title)
         title.setObjectName("section-title")
-        sub = QLabel("Available system updates via pacman")
+        sub = QLabel(s.pkg_subtitle)
         sub.setObjectName("section-sub")
         root.addWidget(title)
         root.addWidget(sub)
 
         toolbar = QHBoxLayout()
-        self._status_label = QLabel("Checking for updates…")
+        self._status_label = QLabel(s.pkg_checking)
         self._status_label.setObjectName("metric-label")
 
-        self._refresh_btn = QPushButton("Refresh")
+        self._refresh_btn = QPushButton(s.pkg_refresh_btn)
         self._refresh_btn.setObjectName("primary-btn")
         self._refresh_btn.clicked.connect(self._fetch)
 
-        self._update_btn = QPushButton("Apply All Updates")
+        self._update_btn = QPushButton(s.pkg_update_btn)
         self._update_btn.setObjectName("danger-btn")
         self._update_btn.setEnabled(False)
         self._update_btn.clicked.connect(self._run_update)
@@ -64,7 +66,9 @@ class PackagesView(QWidget):
         root.addLayout(toolbar)
 
         self._table = QTableWidget(0, 3)
-        self._table.setHorizontalHeaderLabels(["Package", "Current", "Available"])
+        self._table.setHorizontalHeaderLabels(
+            [s.pkg_col_name, s.pkg_col_current, s.pkg_col_available]
+        )
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(0, header.ResizeMode.Stretch)
         header.setSectionResizeMode(1, header.ResizeMode.ResizeToContents)
@@ -77,9 +81,10 @@ class PackagesView(QWidget):
     def _fetch(self):
         if self._worker and self._worker.isRunning():
             return
+        s = strings.get()
         self._refresh_btn.setEnabled(False)
         self._update_btn.setEnabled(False)
-        self._status_label.setText("Checking for updates…")
+        self._status_label.setText(s.pkg_checking)
         self._table.setRowCount(0)
 
         self._worker = FetchWorker(self._pm)
@@ -87,6 +92,7 @@ class PackagesView(QWidget):
         self._worker.start()
 
     def _on_fetch_done(self, packages):
+        s = strings.get()
         self._packages = packages
         self._refresh_btn.setEnabled(True)
         self._table.setRowCount(len(packages))
@@ -100,9 +106,10 @@ class PackagesView(QWidget):
 
         count = len(packages)
         if count == 0:
-            self._status_label.setText("System is up to date.")
+            self._status_label.setText(s.pkg_up_to_date)
         else:
-            self._status_label.setText(f"{count} update{'s' if count != 1 else ''} available")
+            plural = "s" if count != 1 else ""
+            self._status_label.setText(s.pkg_n_available.format(n=count, s=plural))
             self._update_btn.setEnabled(True)
 
         self.summary_ready.emit(count)

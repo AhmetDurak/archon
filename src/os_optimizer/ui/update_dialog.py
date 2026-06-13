@@ -2,12 +2,14 @@ from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QTextEdit
 
 from os_optimizer.sudo_session import SudoSession
+from os_optimizer.ui import strings
 
 
 class UpdateDialog(QDialog):
     def __init__(self, command: list[str], sudo_session: SudoSession, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Applying Updates")
+        s = strings.get()
+        self.setWindowTitle(s.update_title)
         self.resize(680, 440)
 
         layout = QVBoxLayout(self)
@@ -15,13 +17,13 @@ class UpdateDialog(QDialog):
         self._output.setReadOnly(True)
         layout.addWidget(self._output)
 
-        self._close_btn = QPushButton("Close")
+        self._close_btn = QPushButton(s.update_close_btn)
         self._close_btn.setObjectName("primary-btn")
         self._close_btn.setEnabled(False)
         self._close_btn.clicked.connect(self.accept)
         layout.addWidget(self._close_btn)
 
-        # If we have a password, inject -S so sudo reads it from stdin
+        # Use sudo -S when we have a password so we can inject it via stdin
         if sudo_session.password is not None:
             cmd = [command[0], "-S"] + command[1:]
         else:
@@ -41,10 +43,11 @@ class UpdateDialog(QDialog):
         self._output.append(data.rstrip())
 
     def _on_finished(self, code: int, _status):
+        s = strings.get()
         if code == 0:
-            self._output.append("\n✓ Update completed successfully.")
+            self._output.append(s.update_success)
         else:
-            self._output.append(f"\n✗ Process exited with code {code}.")
+            self._output.append(s.update_failed.format(code=code))
         self._close_btn.setEnabled(True)
 
     def closeEvent(self, event):

@@ -1,0 +1,136 @@
+# OS Optimizer
+
+A native desktop app for monitoring and optimizing Linux systems.  
+Built with Python + PySide6 (Qt6). Catppuccin Mocha dark theme.
+
+---
+
+## Features
+
+| View | What it does |
+|---|---|
+| **Dashboard** | Live CPU / RAM / Disk gauges, refreshed every 2 s. Summary cards show pending updates and health issues. One-click "Apply All Updates" button appears when updates are available. |
+| **Disk Usage** | Lists physical partitions (deduplicates btrfs subvolumes). On-demand scanner shows the largest directories under any path. |
+| **Packages** | Calls `checkupdates` (pacman-contrib) to list outdated packages without touching the system. Applies updates with live terminal output. |
+| **Health** | Scans for permission issues, orphaned packages, broken symlinks, stale autostart entries, oversized pacman cache, and more. |
+
+### Health checks
+
+| Check | Category | Severity |
+|---|---|---|
+| `/tmp`, `/var/tmp` permissions (must be 1777) | permission | warning |
+| Home directory world-accessible | permission | warning |
+| `~/.ssh` permissions (must be 700) | permission | error |
+| SSH private key permissions (must be 600) | permission | error |
+| `~/.ssh/authorized_keys` permissions | permission | warning |
+| `~/.gnupg` permissions (must be 700) | permission | error |
+| `/etc/passwd` permissions (must be 644) | permission | warning |
+| `/etc/shadow` permissions (must be 640) | permission | warning |
+| Orphaned packages (`pacman -Qtd`) | package | info |
+| Pacman cache > 3 GB | config | info |
+| Broken symlinks in `~/.config`, `~/.local/share` | config | info |
+| Stale autostart `.desktop` entries | config | info |
+
+---
+
+## Requirements
+
+- **OS**: Arch Linux (Linux support only; Windows is on the roadmap)
+- **Python**: 3.11+
+- **Qt**: PySide6 ≥ 6.6 (installed via pip)
+- **pacman-contrib**: for `checkupdates` (update checking without root)
+
+```bash
+sudo pacman -S pacman-contrib
+```
+
+### Sudo for updates
+
+Applying updates runs `sudo pacman -Syu`. The app asks for your sudo password at startup and holds it in memory for the session (never written to disk). If you have `NOPASSWD` configured for pacman, the auth dialog is skipped automatically.
+
+Example sudoers line (optional):
+```
+yourusername ALL=(ALL) NOPASSWD: /usr/bin/pacman
+```
+
+---
+
+## Installation
+
+```bash
+git clone <repo>
+cd OS_Optimizer
+
+python -m venv .venv
+.venv/bin/pip install -e .
+```
+
+## Running
+
+```bash
+# X11
+QT_QPA_PLATFORM=xcb .venv/bin/python -m os_optimizer
+
+# Wayland
+.venv/bin/python -m os_optimizer
+
+# Via installed script
+.venv/bin/os-optimizer
+```
+
+---
+
+## Architecture
+
+```
+src/os_optimizer/
+  core/interfaces.py        ABCs + data classes — no platform or UI imports
+  platform/__init__.py      Factory: returns Linux implementations
+  platform/linux/
+    disk.py                 psutil + du
+    packages.py             checkupdates (pacman-contrib)
+    health.py               permission, package, and config checks
+  sudo_session.py           Holds sudo credentials for the session
+  ui/
+    strings.py              All user-visible text — EN / DE / TR
+    theme.py                Catppuccin Mocha QSS stylesheet
+    main_window.py          QMainWindow, sidebar, QStackedWidget
+    auth_dialog.py          Sudo password dialog (shown at startup)
+    update_dialog.py        Live update output (QProcess)
+    views/
+      dashboard_view.py     Live metrics + summary cards
+      disk_view.py          Partition bars + directory scanner
+      packages_view.py      Package list + apply updates
+      health_view.py        Issue table + rescan
+```
+
+**DI approach**: constructor injection throughout — no DI framework, no globals.  
+`main()` creates platform services and `SudoSession`, passes them to `MainWindow`, which passes them to the views that need them.
+
+**Threading**: slow operations (checkupdates, health scan, du) run in `QThread` workers. The UI never blocks.
+
+---
+
+## Multi-language support
+
+All user-visible strings live in `src/os_optimizer/ui/strings.py`.  
+Three languages are implemented: **EN** (default), **DE**, **TR**.
+
+To switch language before launch:
+```python
+from os_optimizer.ui import strings
+strings.set_language("de")   # or "tr"
+```
+
+To add a new language, create a new `AppStrings(...)` instance in `strings.py` and register it in `LANGUAGES`.
+
+---
+
+## Roadmap
+
+- [ ] Windows support (`winreg` + `winget` platform implementations)
+- [ ] Language selector in the UI (no restart required)
+- [ ] System tray icon with background health monitoring
+- [ ] Scheduled health scan with desktop notifications
+- [ ] Dark/light theme toggle
+- [ ] Export health report as PDF / JSON

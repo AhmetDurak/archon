@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 
 from os_optimizer.core.interfaces import IDiskAnalyzer, IPackageManager, IHealthChecker
 from os_optimizer.sudo_session import SudoSession
+from os_optimizer.ui import strings
 from os_optimizer.ui.views.dashboard_view import DashboardView
 from os_optimizer.ui.views.disk_view import DiskView
 from os_optimizer.ui.views.packages_view import PackagesView
@@ -21,7 +22,8 @@ class MainWindow(QMainWindow):
         sudo_session: SudoSession,
     ):
         super().__init__()
-        self.setWindowTitle("OS Optimizer")
+        s = strings.get()
+        self.setWindowTitle(s.app_name)
         self.setMinimumSize(960, 640)
         self.resize(1100, 700)
 
@@ -37,7 +39,6 @@ class MainWindow(QMainWindow):
         self._stack.setObjectName("content")
         layout.addWidget(self._stack, 1)
 
-        # Create views
         self._dashboard = DashboardView(disk, packages, health, sudo_session)
         self._disk_view = DiskView(disk)
         self._packages_view = PackagesView(packages, sudo_session)
@@ -50,7 +51,6 @@ class MainWindow(QMainWindow):
 
         self._pkg_count = 0
         self._health_count = 0
-
         self._packages_view.summary_ready.connect(self._on_pkg_count)
         self._health_view.summary_ready.connect(self._on_health_count)
 
@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self._dashboard.refresh_summaries(self._pkg_count, self._health_count)
 
     def _build_sidebar(self) -> QWidget:
+        s = strings.get()
         sidebar = QWidget()
         sidebar.setObjectName("sidebar")
         sidebar.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
@@ -73,15 +74,15 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        title = QLabel("OS Optimizer")
+        title = QLabel(s.app_name)
         title.setObjectName("app-title")
         layout.addWidget(title)
 
         nav_items = [
-            ("📊  Dashboard", 0),
-            ("💾  Disk Usage", 1),
-            ("📦  Packages", 2),
-            ("🏥  Health", 3),
+            (f"{s.nav_dashboard_icon}  {s.nav_dashboard}", 0),
+            (f"{s.nav_disk_icon}  {s.nav_disk}", 1),
+            (f"{s.nav_packages_icon}  {s.nav_packages}", 2),
+            (f"{s.nav_health_icon}  {s.nav_health}", 3),
         ]
 
         self._nav_buttons = []
@@ -96,7 +97,7 @@ class MainWindow(QMainWindow):
 
         layout.addStretch()
 
-        version_label = QLabel("v0.1  ·  Arch Linux")
+        version_label = QLabel(f"v0.1  ·  {s.app_platform}")
         version_label.setObjectName("metric-label")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         version_label.setContentsMargins(0, 0, 0, 16)

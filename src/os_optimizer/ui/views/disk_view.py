@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 
 from os_optimizer.core.interfaces import IDiskAnalyzer
+from os_optimizer.ui import strings
 
 
 def _fmt_bytes(n: int) -> str:
@@ -24,8 +25,7 @@ class DirScanWorker(QThread):
         self._path = path
 
     def run(self):
-        result = self._analyzer.get_large_dirs(self._path)
-        self.done.emit(result)
+        self.done.emit(self._analyzer.get_large_dirs(self._path))
 
 
 class DiskView(QWidget):
@@ -37,31 +37,30 @@ class DiskView(QWidget):
         self._load()
 
     def _setup_ui(self):
+        s = strings.get()
         root = QVBoxLayout(self)
         root.setSpacing(16)
 
-        title = QLabel("Disk Usage")
+        title = QLabel(s.disk_title)
         title.setObjectName("section-title")
-        sub = QLabel("Partition usage and largest directories")
+        sub = QLabel(s.disk_subtitle)
         sub.setObjectName("section-sub")
         root.addWidget(title)
         root.addWidget(sub)
 
-        # Partition bars
         self._parts_frame = QFrame()
         self._parts_frame.setObjectName("card")
         self._parts_layout = QVBoxLayout(self._parts_frame)
         root.addWidget(self._parts_frame)
 
-        # Large dirs
         dir_header = QHBoxLayout()
-        dir_label = QLabel("Largest directories in:")
+        dir_label = QLabel(s.disk_largest_in)
         dir_label.setObjectName("metric-label")
         self._path_combo = QComboBox()
         self._path_combo.addItems(["/", "/home", "/var", "/usr", "/tmp"])
         self._path_combo.currentTextChanged.connect(self._scan_dirs)
 
-        self._scan_btn = QPushButton("Scan")
+        self._scan_btn = QPushButton(s.disk_scan_btn)
         self._scan_btn.setObjectName("primary-btn")
         self._scan_btn.setFixedWidth(80)
         self._scan_btn.clicked.connect(self._scan_dirs)
@@ -73,7 +72,7 @@ class DiskView(QWidget):
         root.addLayout(dir_header)
 
         self._dirs_table = QTableWidget(0, 2)
-        self._dirs_table.setHorizontalHeaderLabels(["Path", "Size"])
+        self._dirs_table.setHorizontalHeaderLabels([s.disk_col_path, s.disk_col_size])
         self._dirs_table.horizontalHeader().setStretchLastSection(False)
         self._dirs_table.horizontalHeader().setSectionResizeMode(
             0, self._dirs_table.horizontalHeader().ResizeMode.Stretch
@@ -84,7 +83,6 @@ class DiskView(QWidget):
         root.addWidget(self._dirs_table)
 
     def _load(self):
-        # Clear old partition rows
         while self._parts_layout.count():
             item = self._parts_layout.takeAt(0)
             if item.widget():
@@ -119,6 +117,7 @@ class DiskView(QWidget):
         self._worker.start()
 
     def _on_scan_done(self, dirs):
+        s = strings.get()
         self._scan_btn.setEnabled(True)
         self._dirs_table.setRowCount(len(dirs))
         for i, d in enumerate(dirs):

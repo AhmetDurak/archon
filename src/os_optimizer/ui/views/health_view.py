@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 )
 
 from os_optimizer.core.interfaces import IHealthChecker
+from os_optimizer.ui import strings
 
 
 class HealthWorker(QThread):
@@ -20,9 +21,9 @@ class HealthWorker(QThread):
 
 
 _SEVERITY_COLORS = {
-    "error": "#f38ba8",
+    "error":   "#f38ba8",
     "warning": "#f9e2af",
-    "info": "#89b4fa",
+    "info":    "#89b4fa",
 }
 
 
@@ -33,26 +34,26 @@ class HealthView(QWidget):
         super().__init__(parent)
         self._checker = checker
         self._worker = None
-        self._issues = []
         self._setup_ui()
         self._fetch()
 
     def _setup_ui(self):
+        s = strings.get()
         root = QVBoxLayout(self)
         root.setSpacing(16)
 
-        title = QLabel("System Health")
+        title = QLabel(s.health_title)
         title.setObjectName("section-title")
-        sub = QLabel("Permission issues and configuration problems")
+        sub = QLabel(s.health_subtitle)
         sub.setObjectName("section-sub")
         root.addWidget(title)
         root.addWidget(sub)
 
         toolbar = QHBoxLayout()
-        self._status_label = QLabel("Scanning…")
+        self._status_label = QLabel(s.health_scanning)
         self._status_label.setObjectName("metric-label")
 
-        self._refresh_btn = QPushButton("Rescan")
+        self._refresh_btn = QPushButton(s.health_rescan_btn)
         self._refresh_btn.setObjectName("primary-btn")
         self._refresh_btn.clicked.connect(self._fetch)
 
@@ -62,7 +63,10 @@ class HealthView(QWidget):
         root.addLayout(toolbar)
 
         self._table = QTableWidget(0, 4)
-        self._table.setHorizontalHeaderLabels(["Severity", "Path", "Issue", "Fix"])
+        self._table.setHorizontalHeaderLabels([
+            s.health_col_severity, s.health_col_path,
+            s.health_col_issue, s.health_col_fix,
+        ])
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(0, header.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, header.ResizeMode.ResizeToContents)
@@ -77,8 +81,9 @@ class HealthView(QWidget):
     def _fetch(self):
         if self._worker and self._worker.isRunning():
             return
+        s = strings.get()
         self._refresh_btn.setEnabled(False)
-        self._status_label.setText("Scanning…")
+        self._status_label.setText(s.health_scanning)
         self._table.setRowCount(0)
 
         self._worker = HealthWorker(self._checker)
@@ -86,19 +91,17 @@ class HealthView(QWidget):
         self._worker.start()
 
     def _on_fetch_done(self, issues):
-        self._issues = issues
+        s = strings.get()
         self._refresh_btn.setEnabled(True)
         self._table.setRowCount(len(issues))
 
         for i, issue in enumerate(issues):
             color = _SEVERITY_COLORS.get(issue.severity, "#cdd6f4")
-
             sev_item = QTableWidgetItem(issue.severity.upper())
             sev_item.setForeground(QColor(color))
             self._table.setItem(i, 0, sev_item)
             self._table.setItem(i, 1, QTableWidgetItem(issue.path))
             self._table.setItem(i, 2, QTableWidgetItem(issue.message))
-
             fix_item = QTableWidgetItem(issue.fix or "—")
             fix_item.setForeground(QColor("#6c7086"))
             self._table.setItem(i, 3, fix_item)
@@ -107,13 +110,11 @@ class HealthView(QWidget):
         warnings = sum(1 for iss in issues if iss.severity == "warning")
 
         if not issues:
-            self._status_label.setText("No issues found — system looks healthy.")
+            self._status_label.setText(s.health_no_issues)
         else:
-            parts = []
-            if errors:
-                parts.append(f"{errors} error{'s' if errors != 1 else ''}")
-            if warnings:
-                parts.append(f"{warnings} warning{'s' if warnings != 1 else ''}")
-            self._status_label.setText(", ".join(parts) + " detected")
+            self._status_label.setText(s.health_n_detected.format(
+                errors=errors, es="s" if errors != 1 else "",
+                warnings=warnings, ws="s" if warnings != 1 else "",
+            ))
 
         self.summary_ready.emit(len(issues))
