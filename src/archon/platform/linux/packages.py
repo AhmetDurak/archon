@@ -1,7 +1,7 @@
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from os_optimizer.core.interfaces import IPackageManager, PackageUpdate, InstalledApp
+from archon.core.interfaces import IPackageManager, PackageUpdate, InstalledApp
 
 _PACMAN_LOCAL = Path("/var/lib/pacman/local")
 

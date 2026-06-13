@@ -4,8 +4,8 @@ from PySide6.QtWidgets import (
     QPushButton, QFrame
 )
 
-from os_optimizer.sudo_session import SudoSession, validate_password
-from os_optimizer.ui import strings
+from archon.sudo_session import SudoSession, validate_password
+from archon.ui import strings
 
 
 class AuthDialog(QDialog):

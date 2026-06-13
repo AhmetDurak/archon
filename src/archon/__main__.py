@@ -1,10 +1,10 @@
 import sys
 from PySide6.QtWidgets import QApplication
-from os_optimizer.ui.theme import CATPPUCCIN_MOCHA
-from os_optimizer.ui.main_window import MainWindow
-from os_optimizer.sudo_session import SudoSession, check_passwordless
-from os_optimizer.ui.auth_dialog import AuthDialog
-from os_optimizer import platform as platform_factory
+from archon.ui.theme import CATPPUCCIN_MOCHA
+from archon.ui.main_window import MainWindow
+from archon.sudo_session import SudoSession, check_passwordless
+from archon.ui.auth_dialog import AuthDialog
+from archon import platform as platform_factory
 
 
 def _acquire_sudo_session(app: QApplication) -> SudoSession:
@@ -18,7 +18,7 @@ def _acquire_sudo_session(app: QApplication) -> SudoSession:
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("OS Optimizer")
+    app.setApplicationName("Archon")
     app.setStyleSheet(CATPPUCCIN_MOCHA)
 
     sudo_session = _acquire_sudo_session(app)

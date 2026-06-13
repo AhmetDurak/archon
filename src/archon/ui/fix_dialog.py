@@ -3,8 +3,8 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QFrame
 )
 
-from os_optimizer.sudo_session import SudoSession
-from os_optimizer.ui import strings
+from archon.sudo_session import SudoSession
+from archon.ui import strings
 
 
 class FixDialog(QDialog):

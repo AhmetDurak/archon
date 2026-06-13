@@ -5,9 +5,9 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QPushButton
 )
 
-from os_optimizer.core.interfaces import IHealthChecker
-from os_optimizer.sudo_session import SudoSession
-from os_optimizer.ui import strings
+from archon.core.interfaces import IHealthChecker
+from archon.sudo_session import SudoSession
+from archon.ui import strings
 
 
 class HealthWorker(QThread):
@@ -145,7 +145,7 @@ class HealthView(QWidget):
         self._fetch()
 
     def _open_fix_dialog(self, command: str):
-        from os_optimizer.ui.fix_dialog import FixDialog
+        from archon.ui.fix_dialog import FixDialog
         btn = self.sender()
         row = next(
             (r for r in range(self._table.rowCount()) if self._table.cellWidget(r, 4) is btn),

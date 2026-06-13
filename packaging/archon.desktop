@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=OS Optimizer
 Comment=System health monitor and optimizer
-Exec=os-optimizer
-Icon=os-optimizer
+Exec=archon
+Icon=archon
 Terminal=false
 Type=Application
 Categories=System;Monitor;

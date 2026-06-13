@@ -1,4 +1,4 @@
-# OS Optimizer
+# Archon
 
 System health monitor and optimizer with a native desktop GUI.
 

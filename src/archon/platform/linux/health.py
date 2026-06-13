@@ -4,7 +4,7 @@ import stat
 import subprocess
 from pathlib import Path
 
-from os_optimizer.core.interfaces import IHealthChecker, HealthIssue
+from archon.core.interfaces import IHealthChecker, HealthIssue
 
 
 class LinuxHealthChecker(IHealthChecker):

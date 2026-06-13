@@ -136,7 +136,7 @@ class AppStrings:
 
 
 EN = AppStrings(
-    app_name="OS Optimizer",
+    app_name="Archon",
     app_platform="Arch Linux",
 
     nav_dashboard_icon="📊",
@@ -214,7 +214,7 @@ EN = AppStrings(
     auth_icon="🔐",
     auth_heading="Sudo Authentication Required",
     auth_description=(
-        "OS Optimizer needs sudo access to apply system updates.\n"
+        "Archon needs sudo access to apply system updates.\n"
         "Your password is used only for this session and never stored on disk."
     ),
     auth_placeholder="Enter sudo password…",
@@ -356,7 +356,7 @@ DE = AppStrings(
 )
 
 TR = AppStrings(
-    app_name="OS Optimizeri",
+    app_name="Archoni",
     app_platform="Arch Linux",
 
     nav_dashboard_icon="📊",
@@ -434,7 +434,7 @@ TR = AppStrings(
     auth_icon="🔐",
     auth_heading="Sudo Erişimi Gerekli",
     auth_description=(
-        "OS Optimizeri sistem güncellemelerini uygulamak için sudo erişimine ihtiyaç duyar.\n"
+        "Archoni sistem güncellemelerini uygulamak için sudo erişimine ihtiyaç duyar.\n"
         "Şifreniz yalnızca bu oturum için kullanılır ve diske hiç kaydedilmez."
     ),
     auth_placeholder="Sudo şifresini girin…",

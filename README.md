@@ -1,4 +1,4 @@
-# OS Optimizer
+# Archon
 
 A native desktop app for monitoring and optimizing Linux systems.  
 Built with Python + PySide6 (Qt6). Catppuccin Mocha dark theme.
@@ -60,7 +60,7 @@ yourusername ALL=(ALL) NOPASSWD: /usr/bin/pacman
 
 ```bash
 git clone <repo>
-cd OS_Optimizer
+cd archon
 
 python -m venv .venv
 .venv/bin/pip install -e .
@@ -70,13 +70,13 @@ python -m venv .venv
 
 ```bash
 # X11
-QT_QPA_PLATFORM=xcb .venv/bin/python -m os_optimizer
+QT_QPA_PLATFORM=xcb .venv/bin/python -m archon
 
 # Wayland
-.venv/bin/python -m os_optimizer
+.venv/bin/python -m archon
 
 # Via installed script
-.venv/bin/os-optimizer
+.venv/bin/archon
 ```
 
 ---
@@ -84,7 +84,7 @@ QT_QPA_PLATFORM=xcb .venv/bin/python -m os_optimizer
 ## Architecture
 
 ```
-src/os_optimizer/
+src/archon/
   core/interfaces.py        ABCs + data classes — no platform or UI imports
   platform/__init__.py      Factory: returns Linux implementations
   platform/linux/
@@ -122,12 +122,12 @@ src/os_optimizer/
 
 ## Multi-language support
 
-All user-visible strings live in `src/os_optimizer/ui/strings.py`.  
+All user-visible strings live in `src/archon/ui/strings.py`.  
 Three languages are implemented: **EN** (default), **DE**, **TR**.
 
 To switch language before launch:
 ```python
-from os_optimizer.ui import strings
+from archon.ui import strings
 strings.set_language("de")   # or "tr"
 ```
 

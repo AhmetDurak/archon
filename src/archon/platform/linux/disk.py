@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 import psutil
-from os_optimizer.core.interfaces import IDiskAnalyzer, DiskPartition, DirSize
+from archon.core.interfaces import IDiskAnalyzer, DiskPartition, DirSize
 
 
 def _block_device_of(path: str) -> str | None:

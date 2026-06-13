@@ -10,8 +10,8 @@ import subprocess
 
 import psutil
 
-from os_optimizer.core.interfaces import IDiskAnalyzer, DiskPartition
-from os_optimizer.ui import strings
+from archon.core.interfaces import IDiskAnalyzer, DiskPartition
+from archon.ui import strings
 
 
 class _SizeItem(QTableWidgetItem):

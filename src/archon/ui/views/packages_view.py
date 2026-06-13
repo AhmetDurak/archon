@@ -5,10 +5,10 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QPushButton
 )
 
-from os_optimizer.core.interfaces import IPackageManager
-from os_optimizer.sudo_session import SudoSession
-from os_optimizer.ui import strings
-from os_optimizer.ui.update_dialog import UpdateDialog
+from archon.core.interfaces import IPackageManager
+from archon.sudo_session import SudoSession
+from archon.ui import strings
+from archon.ui.update_dialog import UpdateDialog
 
 
 class FetchWorker(QThread):

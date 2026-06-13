@@ -9,14 +9,14 @@ from PySide6.QtWidgets import (
 
 _ICON_PATH = Path(__file__).parent.parent / "assets" / "icon.svg"
 
-from os_optimizer.core.interfaces import IDiskAnalyzer, IPackageManager, IHealthChecker
-from os_optimizer.sudo_session import SudoSession
-from os_optimizer.ui import strings
-from os_optimizer.ui.views.dashboard_view import DashboardView
-from os_optimizer.ui.views.disk_view import DiskView
-from os_optimizer.ui.views.packages_view import PackagesView
-from os_optimizer.ui.views.health_view import HealthView
-from os_optimizer.ui.views.apps_view import AppsView
+from archon.core.interfaces import IDiskAnalyzer, IPackageManager, IHealthChecker
+from archon.sudo_session import SudoSession
+from archon.ui import strings
+from archon.ui.views.dashboard_view import DashboardView
+from archon.ui.views.disk_view import DiskView
+from archon.ui.views.packages_view import PackagesView
+from archon.ui.views.health_view import HealthView
+from archon.ui.views.apps_view import AppsView
 
 
 class MainWindow(QMainWindow):

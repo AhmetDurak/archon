@@ -1,8 +1,8 @@
 from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QTextEdit
 
-from os_optimizer.sudo_session import SudoSession
-from os_optimizer.ui import strings
+from archon.sudo_session import SudoSession
+from archon.ui import strings
 
 
 class UpdateDialog(QDialog):
