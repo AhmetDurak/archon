@@ -26,6 +26,14 @@ class PackageUpdate:
 
 
 @dataclass
+class InstalledApp:
+    name: str
+    version: str
+    size_bytes: int
+    description: str
+
+
+@dataclass
 class HealthIssue:
     severity: str       # "error" | "warning" | "info"
     category: str       # "permission" | "config" | "package"
@@ -50,6 +58,9 @@ class IPackageManager(ABC):
     def get_update_command(self) -> list[str]:
         """Returns the shell command to run a full system update."""
         ...
+
+    @abstractmethod
+    def get_installed_packages(self) -> list[InstalledApp]: ...
 
 
 class IHealthChecker(ABC):

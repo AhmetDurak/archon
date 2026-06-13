@@ -31,6 +31,8 @@ class AppStrings:
     nav_packages: str
     nav_health_icon: str
     nav_health: str
+    nav_apps_icon: str
+    nav_apps: str
 
     # ── Dashboard ─────────────────────────────────────────────────────────
     dash_title: str
@@ -115,6 +117,18 @@ class AppStrings:
     update_success: str
     update_failed: str              # format: {code}
 
+    # ── Apps view ─────────────────────────────────────────────────────────
+    apps_title: str
+    apps_subtitle: str
+    apps_loading: str
+    apps_n_packages: str            # format: {n}, {size}
+    apps_search_placeholder: str
+    apps_refresh_btn: str
+    apps_col_name: str
+    apps_col_version: str
+    apps_col_size: str
+    apps_col_desc: str
+
 
 EN = AppStrings(
     app_name="OS Optimizer",
@@ -128,6 +142,8 @@ EN = AppStrings(
     nav_packages="Packages",
     nav_health_icon="🏥",
     nav_health="Health",
+    nav_apps_icon="📋",
+    nav_apps="Installed Apps",
 
     dash_title="Dashboard",
     dash_subtitle="Live system overview",
@@ -147,8 +163,8 @@ EN = AppStrings(
     dash_temp_na="N/A",
 
     disk_title="Disk Usage",
-    disk_subtitle="Partition overview and largest directories",
-    disk_largest_in="Largest directories in:",
+    disk_subtitle="Partition overview and largest files & folders",
+    disk_largest_in="Largest items in:",
     disk_scan_btn="Scan",
     disk_col_path="Path",
     disk_col_size="Size",
@@ -206,6 +222,17 @@ EN = AppStrings(
     update_close_btn="Close",
     update_success="\n✓ Update completed successfully.",
     update_failed="\n✗ Process exited with code {code}.",
+
+    apps_title="Installed Applications",
+    apps_subtitle="All packages installed via pacman, sorted by size",
+    apps_loading="Loading installed packages…",
+    apps_n_packages="{n} packages · {size} installed",
+    apps_search_placeholder="Filter by name…",
+    apps_refresh_btn="Refresh",
+    apps_col_name="Package",
+    apps_col_version="Version",
+    apps_col_size="Installed Size",
+    apps_col_desc="Description",
 )
 
 DE = AppStrings(
@@ -220,6 +247,8 @@ DE = AppStrings(
     nav_packages="Pakete",
     nav_health_icon="🏥",
     nav_health="Gesundheit",
+    nav_apps_icon="📋",
+    nav_apps="Installierte Apps",
 
     dash_title="Dashboard",
     dash_subtitle="Live-Systemübersicht",
@@ -239,8 +268,8 @@ DE = AppStrings(
     dash_temp_na="N/V",
 
     disk_title="Festplattennutzung",
-    disk_subtitle="Partitionsübersicht und größte Verzeichnisse",
-    disk_largest_in="Größte Verzeichnisse in:",
+    disk_subtitle="Partitionsübersicht und größte Dateien & Ordner",
+    disk_largest_in="Größte Einträge in:",
     disk_scan_btn="Scannen",
     disk_col_path="Pfad",
     disk_col_size="Größe",
@@ -298,6 +327,17 @@ DE = AppStrings(
     update_close_btn="Schließen",
     update_success="\n✓ Update erfolgreich abgeschlossen.",
     update_failed="\n✗ Prozess mit Code {code} beendet.",
+
+    apps_title="Installierte Anwendungen",
+    apps_subtitle="Alle via pacman installierten Pakete, nach Größe sortiert",
+    apps_loading="Pakete werden geladen…",
+    apps_n_packages="{n} Pakete · {size} installiert",
+    apps_search_placeholder="Nach Name filtern…",
+    apps_refresh_btn="Aktualisieren",
+    apps_col_name="Paket",
+    apps_col_version="Version",
+    apps_col_size="Installierte Größe",
+    apps_col_desc="Beschreibung",
 )
 
 TR = AppStrings(
@@ -312,6 +352,8 @@ TR = AppStrings(
     nav_packages="Paketler",
     nav_health_icon="🏥",
     nav_health="Sağlık",
+    nav_apps_icon="📋",
+    nav_apps="Yüklü Uygulamalar",
 
     dash_title="Gösterge Paneli",
     dash_subtitle="Canlı sistem özeti",
@@ -331,8 +373,8 @@ TR = AppStrings(
     dash_temp_na="Yok",
 
     disk_title="Disk Kullanımı",
-    disk_subtitle="Bölüm genel bakış ve en büyük klasörler",
-    disk_largest_in="En büyük klasörler:",
+    disk_subtitle="Bölüm genel bakış ve en büyük dosya & klasörler",
+    disk_largest_in="En büyük öğeler:",
     disk_scan_btn="Tara",
     disk_col_path="Yol",
     disk_col_size="Boyut",
@@ -390,6 +432,17 @@ TR = AppStrings(
     update_close_btn="Kapat",
     update_success="\n✓ Güncelleme başarıyla tamamlandı.",
     update_failed="\n✗ İşlem {code} koduyla sonlandı.",
+
+    apps_title="Yüklü Uygulamalar",
+    apps_subtitle="pacman ile yüklenmiş tüm paketler, boyuta göre sıralı",
+    apps_loading="Paketler yükleniyor…",
+    apps_n_packages="{n} paket · {size} yüklü",
+    apps_search_placeholder="İsme göre filtrele…",
+    apps_refresh_btn="Yenile",
+    apps_col_name="Paket",
+    apps_col_version="Sürüm",
+    apps_col_size="Yüklü Boyut",
+    apps_col_desc="Açıklama",
 )
 
 

@@ -29,7 +29,7 @@ class LinuxDiskAnalyzer(IDiskAnalyzer):
     def get_large_dirs(self, path: str, limit: int = 10) -> list[DirSize]:
         try:
             proc = subprocess.run(
-                ["du", "-x", "--max-depth=1", path],
+                ["du", "-ax", "--max-depth=1", path],
                 capture_output=True, text=True, timeout=30
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):

@@ -16,6 +16,7 @@ from os_optimizer.ui.views.dashboard_view import DashboardView
 from os_optimizer.ui.views.disk_view import DiskView
 from os_optimizer.ui.views.packages_view import PackagesView
 from os_optimizer.ui.views.health_view import HealthView
+from os_optimizer.ui.views.apps_view import AppsView
 
 
 class MainWindow(QMainWindow):
@@ -51,11 +52,13 @@ class MainWindow(QMainWindow):
         self._disk_view = DiskView(disk)
         self._packages_view = PackagesView(packages, sudo_session)
         self._health_view = HealthView(health, sudo_session)
+        self._apps_view = AppsView(packages)
 
         self._stack.addWidget(self._dashboard)
         self._stack.addWidget(self._disk_view)
         self._stack.addWidget(self._packages_view)
         self._stack.addWidget(self._health_view)
+        self._stack.addWidget(self._apps_view)
 
         self._pkg_count = 0
         self._health_count = 0
@@ -108,6 +111,7 @@ class MainWindow(QMainWindow):
             (f"{s.nav_disk_icon}  {s.nav_disk}", 1),
             (f"{s.nav_packages_icon}  {s.nav_packages}", 2),
             (f"{s.nav_health_icon}  {s.nav_health}", 3),
+            (f"{s.nav_apps_icon}  {s.nav_apps}", 4),
         ]
 
         self._nav_buttons = []
