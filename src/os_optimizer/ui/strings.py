@@ -131,6 +131,7 @@ class AppStrings:
     apps_col_desc: str
     apps_col_action: str
     apps_remove_btn: str
+    apps_remove_title: str
 
 
 EN = AppStrings(
@@ -239,6 +240,7 @@ EN = AppStrings(
     apps_col_desc="Description",
     apps_col_action="Action",
     apps_remove_btn="Remove",
+    apps_remove_title="Remove Package",
 )
 
 DE = AppStrings(
@@ -347,6 +349,7 @@ DE = AppStrings(
     apps_col_desc="Beschreibung",
     apps_col_action="Aktion",
     apps_remove_btn="Entfernen",
+    apps_remove_title="Paket entfernen",
 )
 
 TR = AppStrings(
@@ -455,6 +458,7 @@ TR = AppStrings(
     apps_col_desc="Açıklama",
     apps_col_action="İşlem",
     apps_remove_btn="Kaldır",
+    apps_remove_title="Paketi Kaldır",
 )
 
 

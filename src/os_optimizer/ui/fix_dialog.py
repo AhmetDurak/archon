@@ -17,10 +17,10 @@ class FixDialog(QDialog):
     Returns Rejected on cancel or non-zero exit — caller skips re-scanning.
     """
 
-    def __init__(self, fix_command: str, sudo_session: SudoSession, parent=None):
+    def __init__(self, fix_command: str, sudo_session: SudoSession, parent=None, title: str | None = None):
         super().__init__(parent)
         s = strings.get()
-        self.setWindowTitle(s.fix_title)
+        self.setWindowTitle(title if title is not None else s.fix_title)
         self.setMinimumWidth(560)
         self._sudo = sudo_session
         self._raw_command = fix_command

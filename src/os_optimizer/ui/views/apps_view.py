@@ -176,7 +176,7 @@ class AppsView(QWidget):
              if self._table.cellWidget(r, _C_ACTION) is btn),
             -1,
         )
-        dlg = FixDialog(command, self._sudo, self)
+        dlg = FixDialog(command, self._sudo, self, title=strings.get().apps_remove_title)
         if dlg.exec():
             if row != -1:
                 self._table.removeRow(row)
