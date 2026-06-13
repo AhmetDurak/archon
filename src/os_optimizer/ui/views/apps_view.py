@@ -39,6 +39,15 @@ class _AppsWorker(QThread):
         self.done.emit(self._manager.get_installed_packages())
 
 
+# Column indices
+_C_NAME    = 0
+_C_VERSION = 1
+_C_SIZE    = 2
+_C_DATE    = 3
+_C_DESC    = 4
+_C_ACTION  = 5
+
+
 class AppsView(QWidget):
     def __init__(self, manager: IPackageManager, sudo_session: SudoSession, parent=None):
         super().__init__(parent)
@@ -80,31 +89,34 @@ class AppsView(QWidget):
         toolbar.addWidget(self._refresh_btn)
         root.addLayout(toolbar)
 
-        self._table = QTableWidget(0, 5)
+        self._table = QTableWidget(0, 6)
         self._table.setHorizontalHeaderLabels([
             s.apps_col_name,
             s.apps_col_version,
             s.apps_col_size,
+            s.apps_col_installed,
             s.apps_col_desc,
             s.apps_col_action,
         ])
         hdr = self._table.horizontalHeader()
-        hdr.setSectionResizeMode(0, hdr.ResizeMode.Interactive)
-        hdr.setSectionResizeMode(1, hdr.ResizeMode.Interactive)
-        hdr.setSectionResizeMode(2, hdr.ResizeMode.Interactive)
-        hdr.setSectionResizeMode(3, hdr.ResizeMode.Stretch)
-        hdr.setSectionResizeMode(4, hdr.ResizeMode.ResizeToContents)
+        hdr.setSectionResizeMode(_C_NAME,    hdr.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(_C_VERSION, hdr.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(_C_SIZE,    hdr.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(_C_DATE,    hdr.ResizeMode.Interactive)
+        hdr.setSectionResizeMode(_C_DESC,    hdr.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(_C_ACTION,  hdr.ResizeMode.ResizeToContents)
         hdr.setStretchLastSection(False)
-        self._table.setColumnWidth(0, 200)
-        self._table.setColumnWidth(1, 110)
-        self._table.setColumnWidth(2, 120)
+        self._table.setColumnWidth(_C_NAME,    180)
+        self._table.setColumnWidth(_C_VERSION, 100)
+        self._table.setColumnWidth(_C_SIZE,    110)
+        self._table.setColumnWidth(_C_DATE,    100)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._table.setAlternatingRowColors(True)
         self._table.setSortingEnabled(True)
         self._table.setWordWrap(False)
         self._table.verticalHeader().setDefaultSectionSize(32)
-        self._table.sortByColumn(2, Qt.SortOrder.DescendingOrder)
+        self._table.sortByColumn(_C_SIZE, Qt.SortOrder.DescendingOrder)
         root.addWidget(self._table)
 
     def _fetch(self):
@@ -131,29 +143,37 @@ class AppsView(QWidget):
         self._table.setSortingEnabled(False)
         self._table.setRowCount(len(apps))
         for i, app in enumerate(apps):
-            self._table.setItem(i, 0, QTableWidgetItem(app.name))
-            self._table.setItem(i, 1, QTableWidgetItem(app.version))
+            self._table.setItem(i, _C_NAME, QTableWidgetItem(app.name))
+            self._table.setItem(i, _C_VERSION, QTableWidgetItem(app.version))
+
             size_item = _SizeItem(_fmt_bytes(app.size_bytes), app.size_bytes)
             size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            self._table.setItem(i, 2, size_item)
-            self._table.setItem(i, 3, QTableWidgetItem(app.description))
+            self._table.setItem(i, _C_SIZE, size_item)
+
+            date_str = app.install_date.strftime("%Y-%m-%d") if app.install_date else "—"
+            self._table.setItem(i, _C_DATE, QTableWidgetItem(date_str))
+
+            desc_item = QTableWidgetItem(app.description)
+            desc_item.setToolTip(app.description)   # full text on hover
+            self._table.setItem(i, _C_DESC, desc_item)
 
             btn = QPushButton(s.apps_remove_btn)
             btn.setObjectName("danger-table-btn")
             btn.clicked.connect(
                 lambda _, cmd=f"sudo pacman -Rns --noconfirm {app.name}": self._remove(cmd)
             )
-            self._table.setCellWidget(i, 4, btn)
+            self._table.setCellWidget(i, _C_ACTION, btn)
 
         self._table.setSortingEnabled(True)
-        self._table.sortByColumn(2, Qt.SortOrder.DescendingOrder)
+        self._table.sortByColumn(_C_SIZE, Qt.SortOrder.DescendingOrder)
         self._filter(self._search.text())
 
     def _remove(self, command: str):
         from os_optimizer.ui.fix_dialog import FixDialog
         btn = self.sender()
         row = next(
-            (r for r in range(self._table.rowCount()) if self._table.cellWidget(r, 4) is btn),
+            (r for r in range(self._table.rowCount())
+             if self._table.cellWidget(r, _C_ACTION) is btn),
             -1,
         )
         dlg = FixDialog(command, self._sudo, self)
@@ -161,15 +181,14 @@ class AppsView(QWidget):
             if row != -1:
                 self._table.removeRow(row)
             self._update_status()
-            # Re-fetch: pacman may have also removed orphaned dependencies
             self._fetch()
 
     def _update_status(self):
         s = strings.get()
         total = sum(
-            self._table.item(r, 2)._raw
+            self._table.item(r, _C_SIZE)._raw
             for r in range(self._table.rowCount())
-            if isinstance(self._table.item(r, 2), _SizeItem)
+            if isinstance(self._table.item(r, _C_SIZE), _SizeItem)
         )
         self._status.setText(
             s.apps_n_packages.format(n=self._table.rowCount(), size=_fmt_bytes(total))
@@ -178,6 +197,6 @@ class AppsView(QWidget):
     def _filter(self, text: str):
         query = text.strip().lower()
         for row in range(self._table.rowCount()):
-            name_item = self._table.item(row, 0)
+            name_item = self._table.item(row, _C_NAME)
             matches = not query or (name_item and query in name_item.text().lower())
             self._table.setRowHidden(row, not matches)

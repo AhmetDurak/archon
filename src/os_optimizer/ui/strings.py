@@ -127,6 +127,7 @@ class AppStrings:
     apps_col_name: str
     apps_col_version: str
     apps_col_size: str
+    apps_col_installed: str
     apps_col_desc: str
     apps_col_action: str
     apps_remove_btn: str
@@ -234,6 +235,7 @@ EN = AppStrings(
     apps_col_name="Package",
     apps_col_version="Version",
     apps_col_size="Installed Size",
+    apps_col_installed="Installed On",
     apps_col_desc="Description",
     apps_col_action="Action",
     apps_remove_btn="Remove",
@@ -341,6 +343,7 @@ DE = AppStrings(
     apps_col_name="Paket",
     apps_col_version="Version",
     apps_col_size="Installierte Größe",
+    apps_col_installed="Installiert am",
     apps_col_desc="Beschreibung",
     apps_col_action="Aktion",
     apps_remove_btn="Entfernen",
@@ -448,6 +451,7 @@ TR = AppStrings(
     apps_col_name="Paket",
     apps_col_version="Sürüm",
     apps_col_size="Yüklü Boyut",
+    apps_col_installed="Yüklenme Tarihi",
     apps_col_desc="Açıklama",
     apps_col_action="İşlem",
     apps_remove_btn="Kaldır",

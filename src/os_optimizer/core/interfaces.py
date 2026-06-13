@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass
@@ -31,6 +32,7 @@ class InstalledApp:
     version: str
     size_bytes: int
     description: str
+    install_date: datetime | None
 
 
 @dataclass

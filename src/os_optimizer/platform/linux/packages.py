@@ -1,5 +1,20 @@
 import subprocess
+from datetime import datetime
+from pathlib import Path
 from os_optimizer.core.interfaces import IPackageManager, PackageUpdate, InstalledApp
+
+_PACMAN_LOCAL = Path("/var/lib/pacman/local")
+
+
+def _install_date_map() -> dict[str, datetime]:
+    """Read mtime of each package dir in the pacman local DB in one pass."""
+    result: dict[str, datetime] = {}
+    if not _PACMAN_LOCAL.exists():
+        return result
+    for entry in _PACMAN_LOCAL.iterdir():
+        if entry.is_dir() and entry.name != "ALPM_DB_VERSION":
+            result[entry.name] = datetime.fromtimestamp(entry.stat().st_mtime)
+    return result
 
 
 def _parse_pacman_size(s: str) -> int:
@@ -46,31 +61,34 @@ class PacmanPackageManager(IPackageManager):
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return []
 
+        dates = _install_date_map()
+
         apps: list[InstalledApp] = []
         current: dict[str, str] = {}
+
+        def _flush(block: dict[str, str]) -> None:
+            name = block.get("Name", "")
+            version = block.get("Version", "")
+            install_date = dates.get(f"{name}-{version}")
+            apps.append(InstalledApp(
+                name=name,
+                version=version,
+                size_bytes=_parse_pacman_size(block.get("Installed Size", "0 B")),
+                description=block.get("Description", ""),
+                install_date=install_date,
+            ))
 
         for line in result.stdout.splitlines():
             if not line.strip():
                 if current.get("Name"):
-                    apps.append(InstalledApp(
-                        name=current["Name"],
-                        version=current.get("Version", ""),
-                        size_bytes=_parse_pacman_size(current.get("Installed Size", "0 B")),
-                        description=current.get("Description", ""),
-                    ))
+                    _flush(current)
                 current = {}
             elif " : " in line and not line[0].isspace():
                 key, _, val = line.partition(" : ")
                 current[key.strip()] = val.strip()
 
-        # flush last block
         if current.get("Name"):
-            apps.append(InstalledApp(
-                name=current["Name"],
-                version=current.get("Version", ""),
-                size_bytes=_parse_pacman_size(current.get("Installed Size", "0 B")),
-                description=current.get("Description", ""),
-            ))
+            _flush(current)
 
         apps.sort(key=lambda a: a.size_bytes, reverse=True)
         return apps
