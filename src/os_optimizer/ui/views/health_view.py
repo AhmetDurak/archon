@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 )
 
 from os_optimizer.core.interfaces import IHealthChecker
+from os_optimizer.sudo_session import SudoSession
 from os_optimizer.ui import strings
 
 
@@ -30,9 +31,10 @@ _SEVERITY_COLORS = {
 class HealthView(QWidget):
     summary_ready = Signal(int)
 
-    def __init__(self, checker: IHealthChecker, parent=None):
+    def __init__(self, checker: IHealthChecker, sudo_session: SudoSession, parent=None):
         super().__init__(parent)
         self._checker = checker
+        self._sudo = sudo_session
         self._worker = None
         self._setup_ui()
         self._fetch()
@@ -62,20 +64,25 @@ class HealthView(QWidget):
         toolbar.addWidget(self._refresh_btn)
         root.addLayout(toolbar)
 
-        self._table = QTableWidget(0, 4)
+        self._table = QTableWidget(0, 5)
         self._table.setHorizontalHeaderLabels([
-            s.health_col_severity, s.health_col_path,
-            s.health_col_issue, s.health_col_fix,
+            s.health_col_severity,
+            s.health_col_path,
+            s.health_col_issue,
+            s.health_col_fix,
+            s.health_col_action,
         ])
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(0, header.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, header.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(2, header.ResizeMode.Stretch)
         header.setSectionResizeMode(3, header.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(4, header.ResizeMode.ResizeToContents)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._table.setAlternatingRowColors(True)
         self._table.setWordWrap(False)
+        self._table.verticalHeader().setDefaultSectionSize(36)
         root.addWidget(self._table)
 
     def _fetch(self):
@@ -97,14 +104,25 @@ class HealthView(QWidget):
 
         for i, issue in enumerate(issues):
             color = _SEVERITY_COLORS.get(issue.severity, "#cdd6f4")
+
             sev_item = QTableWidgetItem(issue.severity.upper())
             sev_item.setForeground(QColor(color))
             self._table.setItem(i, 0, sev_item)
             self._table.setItem(i, 1, QTableWidgetItem(issue.path))
             self._table.setItem(i, 2, QTableWidgetItem(issue.message))
+
             fix_item = QTableWidgetItem(issue.fix or "—")
             fix_item.setForeground(QColor("#6c7086"))
             self._table.setItem(i, 3, fix_item)
+
+            if issue.fix:
+                btn = QPushButton(s.health_fix_btn)
+                btn.setObjectName("primary-btn")
+                btn.setFixedHeight(28)
+                btn.clicked.connect(
+                    lambda _, cmd=issue.fix: self._open_fix_dialog(cmd)
+                )
+                self._table.setCellWidget(i, 4, btn)
 
         errors = sum(1 for iss in issues if iss.severity == "error")
         warnings = sum(1 for iss in issues if iss.severity == "warning")
@@ -118,3 +136,9 @@ class HealthView(QWidget):
             ))
 
         self.summary_ready.emit(len(issues))
+
+    def _open_fix_dialog(self, command: str):
+        from os_optimizer.ui.fix_dialog import FixDialog
+        dlg = FixDialog(command, self._sudo, self)
+        if dlg.exec():
+            self._fetch()

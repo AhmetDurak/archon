@@ -1,3 +1,4 @@
+import time
 import psutil
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
@@ -15,6 +16,29 @@ def _fmt_bytes(n: int) -> str:
             return f"{n:.1f} {unit}"
         n /= 1024
     return f"{n:.1f} PB"
+
+
+def _fmt_uptime(boot_time: float) -> str:
+    secs = int(time.time() - boot_time)
+    days, secs = divmod(secs, 86400)
+    hours, secs = divmod(secs, 3600)
+    mins = secs // 60
+    if days > 0:
+        return f"{days}d {hours}h {mins}m"
+    return f"{hours}h {mins}m"
+
+
+def _cpu_temp() -> str | None:
+    """Returns formatted temperature string, or None if unavailable."""
+    try:
+        temps = psutil.sensors_temperatures()
+        for key in ("coretemp", "k10temp", "cpu-thermal", "cpu_thermal", "acpitz"):
+            if key in temps and temps[key]:
+                avg = sum(e.current for e in temps[key]) / len(temps[key])
+                return f"{avg:.0f} °C"
+    except AttributeError:
+        pass
+    return None
 
 
 class MetricCard(QFrame):
@@ -49,6 +73,27 @@ class MetricCard(QFrame):
         self._bar.style().polish(self._bar)
 
 
+class SimpleCard(QFrame):
+    """Card without a progress bar — for uptime, temp, etc."""
+    def __init__(self, label: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName("card")
+        layout = QVBoxLayout(self)
+        layout.setSpacing(6)
+        lbl = QLabel(label)
+        lbl.setObjectName("metric-label")
+        self._value = QLabel("—")
+        self._value.setObjectName("metric-value")
+        layout.addWidget(lbl)
+        layout.addWidget(self._value)
+
+    def set_value(self, text: str, color: str = "#cdd6f4"):
+        self._value.setText(text)
+        self._value.setStyleSheet(
+            f"font-size: 18px; font-weight: bold; color: {color};"
+        )
+
+
 class DashboardView(QWidget):
     def __init__(
         self,
@@ -72,7 +117,7 @@ class DashboardView(QWidget):
     def _setup_ui(self):
         s = strings.get()
         root = QVBoxLayout(self)
-        root.setSpacing(20)
+        root.setSpacing(16)
 
         title = QLabel(s.dash_title)
         title.setObjectName("section-title")
@@ -81,24 +126,40 @@ class DashboardView(QWidget):
         root.addWidget(title)
         root.addWidget(sub)
 
-        cards_row = QHBoxLayout()
-        cards_row.setSpacing(12)
+        # Row 1 — CPU / RAM / Disk
+        row1 = QHBoxLayout()
+        row1.setSpacing(12)
         self._cpu_card = MetricCard(s.dash_cpu)
         self._ram_card = MetricCard(s.dash_ram)
         self._disk_card = MetricCard(s.dash_disk_root)
-        cards_row.addWidget(self._cpu_card)
-        cards_row.addWidget(self._ram_card)
-        cards_row.addWidget(self._disk_card)
-        root.addLayout(cards_row)
+        row1.addWidget(self._cpu_card)
+        row1.addWidget(self._ram_card)
+        row1.addWidget(self._disk_card)
+        root.addLayout(row1)
 
-        summary_row = QHBoxLayout()
-        summary_row.setSpacing(12)
+        # Row 2 — Uptime / Load / Swap / CPU Temp
+        row2 = QHBoxLayout()
+        row2.setSpacing(12)
+        self._uptime_card = SimpleCard(s.dash_uptime)
+        self._load_card = SimpleCard(s.dash_load)
+        self._swap_card = SimpleCard(s.dash_swap)
+        self._temp_card = SimpleCard(s.dash_temp)
+        row2.addWidget(self._uptime_card)
+        row2.addWidget(self._load_card)
+        row2.addWidget(self._swap_card)
+        row2.addWidget(self._temp_card)
+        root.addLayout(row2)
+
+        # Row 3 — Summary cards
+        row3 = QHBoxLayout()
+        row3.setSpacing(12)
         self._pkg_card = self._summary_card(s.dash_packages_label, s.dash_checking)
         self._health_card = self._summary_card(s.dash_health_label, s.dash_checking)
-        summary_row.addWidget(self._pkg_card[0])
-        summary_row.addWidget(self._health_card[0])
-        root.addLayout(summary_row)
+        row3.addWidget(self._pkg_card[0])
+        row3.addWidget(self._health_card[0])
+        root.addLayout(row3)
 
+        # Update button — hidden until updates are found
         self._update_btn = QPushButton(s.dash_update_btn)
         self._update_btn.setObjectName("primary-btn")
         self._update_btn.setFixedHeight(42)
@@ -121,15 +182,20 @@ class DashboardView(QWidget):
         return frame, val
 
     def _refresh_metrics(self):
+        s = strings.get()
+
+        # CPU
         cpu = psutil.cpu_percent(interval=None)
         self._cpu_card.update(cpu, f"{cpu:.0f}%")
 
+        # RAM
         mem = psutil.virtual_memory()
         self._ram_card.update(
             mem.percent, f"{mem.percent:.0f}%",
             f"{_fmt_bytes(mem.used)} / {_fmt_bytes(mem.total)}",
         )
 
+        # Disk /
         partitions = self._disk.get_partitions()
         root_part = next((p for p in partitions if p.mountpoint == "/"), None)
         if root_part:
@@ -137,6 +203,33 @@ class DashboardView(QWidget):
                 root_part.percent, f"{root_part.percent:.0f}%",
                 f"{_fmt_bytes(root_part.used)} / {_fmt_bytes(root_part.total)}",
             )
+
+        # Uptime
+        self._uptime_card.set_value(_fmt_uptime(psutil.boot_time()))
+
+        # Load (5-min avg as % of logical CPU count)
+        load1, load5, load15 = psutil.getloadavg()
+        cpu_count = psutil.cpu_count() or 1
+        load_pct = (load5 / cpu_count) * 100
+        load_color = "#f38ba8" if load_pct > 100 else "#f9e2af" if load_pct > 70 else "#a6e3a1"
+        self._load_card.set_value(f"{load5:.2f}", load_color)
+
+        # Swap
+        swap = psutil.swap_memory()
+        if swap.total > 0:
+            swap_color = "#f38ba8" if swap.percent >= 90 else "#f9e2af" if swap.percent >= 70 else "#a6e3a1"
+            self._swap_card.set_value(
+                f"{swap.percent:.0f}%  ({_fmt_bytes(swap.used)})", swap_color
+            )
+        else:
+            self._swap_card.set_value("—")
+
+        # CPU temperature
+        temp = _cpu_temp()
+        if temp:
+            self._temp_card.set_value(temp)
+        else:
+            self._temp_card.set_value(s.dash_temp_na, "#6c7086")
 
     def refresh_summaries(self, pkg_count: int, issue_count: int):
         s = strings.get()
