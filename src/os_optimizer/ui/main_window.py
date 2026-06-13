@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 
 from os_optimizer.core.interfaces import IDiskAnalyzer, IPackageManager, IHealthChecker
+from os_optimizer.sudo_session import SudoSession
 from os_optimizer.ui.views.dashboard_view import DashboardView
 from os_optimizer.ui.views.disk_view import DiskView
 from os_optimizer.ui.views.packages_view import PackagesView
@@ -17,6 +18,7 @@ class MainWindow(QMainWindow):
         disk: IDiskAnalyzer,
         packages: IPackageManager,
         health: IHealthChecker,
+        sudo_session: SudoSession,
     ):
         super().__init__()
         self.setWindowTitle("OS Optimizer")
@@ -36,9 +38,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._stack, 1)
 
         # Create views
-        self._dashboard = DashboardView(disk, packages, health)
+        self._dashboard = DashboardView(disk, packages, health, sudo_session)
         self._disk_view = DiskView(disk)
-        self._packages_view = PackagesView(packages)
+        self._packages_view = PackagesView(packages, sudo_session)
         self._health_view = HealthView(health)
 
         self._stack.addWidget(self._dashboard)

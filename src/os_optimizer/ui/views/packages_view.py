@@ -1,11 +1,13 @@
-from PySide6.QtCore import QThread, Signal, QProcess
+from PySide6.QtCore import QThread, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
-    QTableWidgetItem, QPushButton, QDialog, QTextEdit
+    QTableWidgetItem, QPushButton
 )
 
 from os_optimizer.core.interfaces import IPackageManager
+from os_optimizer.sudo_session import SudoSession
+from os_optimizer.ui.update_dialog import UpdateDialog
 
 
 class FetchWorker(QThread):
@@ -19,53 +21,13 @@ class FetchWorker(QThread):
         self.done.emit(self._pm.get_outdated_packages())
 
 
-class UpdateDialog(QDialog):
-    def __init__(self, command: list[str], parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Applying Updates")
-        self.resize(640, 400)
-
-        layout = QVBoxLayout(self)
-        self._output = QTextEdit()
-        self._output.setReadOnly(True)
-        layout.addWidget(self._output)
-
-        self._close_btn = QPushButton("Close")
-        self._close_btn.setObjectName("primary-btn")
-        self._close_btn.setEnabled(False)
-        self._close_btn.clicked.connect(self.accept)
-        layout.addWidget(self._close_btn)
-
-        self._process = QProcess(self)
-        self._process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
-        self._process.readyReadStandardOutput.connect(self._read_output)
-        self._process.finished.connect(self._on_finished)
-        self._process.start(command[0], command[1:])
-
-    def _read_output(self):
-        data = self._process.readAllStandardOutput().data().decode(errors="replace")
-        self._output.append(data.rstrip())
-
-    def _on_finished(self, code: int, _status):
-        if code == 0:
-            self._output.append("\n✓ Update completed successfully.")
-        else:
-            self._output.append(f"\n✗ Process exited with code {code}.")
-        self._close_btn.setEnabled(True)
-
-    def closeEvent(self, event):
-        if self._process.state() != QProcess.ProcessState.NotRunning:
-            self._process.kill()
-            self._process.waitForFinished(2000)
-        super().closeEvent(event)
-
-
 class PackagesView(QWidget):
     summary_ready = Signal(int)
 
-    def __init__(self, pkg_manager: IPackageManager, parent=None):
+    def __init__(self, pkg_manager: IPackageManager, sudo_session: SudoSession, parent=None):
         super().__init__(parent)
         self._pm = pkg_manager
+        self._sudo = sudo_session
         self._worker = None
         self._packages = []
         self._setup_ui()
@@ -146,6 +108,6 @@ class PackagesView(QWidget):
         self.summary_ready.emit(count)
 
     def _run_update(self):
-        dlg = UpdateDialog(self._pm.get_update_command(), self)
+        dlg = UpdateDialog(self._pm.get_update_command(), self._sudo, self)
         dlg.exec()
         self._fetch()

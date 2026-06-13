@@ -2,7 +2,18 @@ import sys
 from PySide6.QtWidgets import QApplication
 from os_optimizer.ui.theme import CATPPUCCIN_MOCHA
 from os_optimizer.ui.main_window import MainWindow
+from os_optimizer.sudo_session import SudoSession, check_passwordless
+from os_optimizer.ui.auth_dialog import AuthDialog
 from os_optimizer import platform as platform_factory
+
+
+def _acquire_sudo_session(app: QApplication) -> SudoSession:
+    if check_passwordless():
+        return SudoSession(password=None)
+
+    dlg = AuthDialog()
+    dlg.exec()
+    return dlg.get_session()
 
 
 def main():
@@ -10,11 +21,13 @@ def main():
     app.setApplicationName("OS Optimizer")
     app.setStyleSheet(CATPPUCCIN_MOCHA)
 
+    sudo_session = _acquire_sudo_session(app)
+
     disk = platform_factory.get_disk_analyzer()
     packages = platform_factory.get_package_manager()
     health = platform_factory.get_health_checker()
 
-    window = MainWindow(disk, packages, health)
+    window = MainWindow(disk, packages, health, sudo_session)
     window.show()
 
     sys.exit(app.exec())

@@ -1,10 +1,11 @@
 import psutil
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QFrame, QPushButton
 )
 
 from os_optimizer.core.interfaces import IDiskAnalyzer, IPackageManager, IHealthChecker
+from os_optimizer.sudo_session import SudoSession
 
 
 def _fmt_bytes(n: int) -> str:
@@ -58,12 +59,13 @@ class DashboardView(QWidget):
         disk: IDiskAnalyzer,
         packages: IPackageManager,
         health: IHealthChecker,
+        sudo_session: SudoSession,
         parent=None,
     ):
         super().__init__(parent)
         self._disk = disk
         self._packages = packages
-        self._health = health
+        self._sudo = sudo_session
         self._setup_ui()
 
         self._timer = QTimer(self)
@@ -85,7 +87,6 @@ class DashboardView(QWidget):
         # Metric cards row
         cards_row = QHBoxLayout()
         cards_row.setSpacing(12)
-
         self._cpu_card = MetricCard("CPU Usage")
         self._ram_card = MetricCard("Memory")
         self._disk_card = MetricCard("Disk  /")
@@ -102,6 +103,14 @@ class DashboardView(QWidget):
         summary_row.addWidget(self._pkg_card[0])
         summary_row.addWidget(self._health_card[0])
         root.addLayout(summary_row)
+
+        # Update action row — hidden until pkg_count > 0
+        self._update_btn = QPushButton("⬆  Apply All Updates Now")
+        self._update_btn.setObjectName("primary-btn")
+        self._update_btn.setFixedHeight(42)
+        self._update_btn.clicked.connect(self._run_update)
+        self._update_btn.hide()
+        root.addWidget(self._update_btn)
 
         root.addStretch()
 
@@ -148,3 +157,10 @@ class DashboardView(QWidget):
         val_health = self._health_card[1]
         val_health.setText(f"{issue_count} issues")
         val_health.setStyleSheet(f"color: {color_health}; font-size: 22px; font-weight: bold;")
+
+        self._update_btn.setVisible(pkg_count > 0)
+
+    def _run_update(self):
+        from os_optimizer.ui.update_dialog import UpdateDialog
+        dlg = UpdateDialog(self._packages.get_update_command(), self._sudo, self)
+        dlg.exec()
