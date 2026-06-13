@@ -7,4 +7,5 @@ build/
 venv/
 .env
 *.log
-.claude/pending_commit.txt
+.claude/
+CLAUDE.md
