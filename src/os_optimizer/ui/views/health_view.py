@@ -1,7 +1,8 @@
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
-    QTableWidgetItem, QPushButton, QApplication
+    QTableWidgetItem, QPushButton
 )
 
 from os_optimizer.core.interfaces import IHealthChecker
@@ -93,19 +94,13 @@ class HealthView(QWidget):
             color = _SEVERITY_COLORS.get(issue.severity, "#cdd6f4")
 
             sev_item = QTableWidgetItem(issue.severity.upper())
-            sev_item.setForeground(Qt.GlobalColor.white)
-            sev_item.setBackground(Qt.GlobalColor.transparent)
-            sev_item.setForeground(
-                __import__("PySide6.QtGui", fromlist=["QColor"]).QColor(color)
-            )
+            sev_item.setForeground(QColor(color))
             self._table.setItem(i, 0, sev_item)
             self._table.setItem(i, 1, QTableWidgetItem(issue.path))
             self._table.setItem(i, 2, QTableWidgetItem(issue.message))
 
             fix_item = QTableWidgetItem(issue.fix or "—")
-            fix_item.setForeground(
-                __import__("PySide6.QtGui", fromlist=["QColor"]).QColor("#6c7086")
-            )
+            fix_item.setForeground(QColor("#6c7086"))
             self._table.setItem(i, 3, fix_item)
 
         errors = sum(1 for iss in issues if iss.severity == "error")

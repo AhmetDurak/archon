@@ -46,22 +46,21 @@ class MainWindow(QMainWindow):
         self._stack.addWidget(self._packages_view)
         self._stack.addWidget(self._health_view)
 
-        # Wire summary signals back to dashboard
-        self._packages_view.summary_ready.connect(
-            lambda n: self._dashboard.refresh_summaries(n, self._last_health_count)
-        )
-        self._health_view.summary_ready.connect(
-            lambda n: self._update_health_count(n)
-        )
-        self._last_health_count = 0
+        self._pkg_count = 0
+        self._health_count = 0
+
+        self._packages_view.summary_ready.connect(self._on_pkg_count)
+        self._health_view.summary_ready.connect(self._on_health_count)
 
         self._nav_buttons[0].setChecked(True)
 
-    def _update_health_count(self, n: int):
-        self._last_health_count = n
-        # Trigger dashboard refresh with current pkg count (unknown at this point, 0 is safe default)
-        # Dashboard will get updated when packages_view also fires
-        self._dashboard.refresh_summaries(0, n)
+    def _on_pkg_count(self, n: int):
+        self._pkg_count = n
+        self._dashboard.refresh_summaries(self._pkg_count, self._health_count)
+
+    def _on_health_count(self, n: int):
+        self._health_count = n
+        self._dashboard.refresh_summaries(self._pkg_count, self._health_count)
 
     def _build_sidebar(self) -> QWidget:
         sidebar = QWidget()

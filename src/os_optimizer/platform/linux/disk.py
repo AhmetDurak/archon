@@ -5,21 +5,26 @@ from os_optimizer.core.interfaces import IDiskAnalyzer, DiskPartition, DirSize
 
 class LinuxDiskAnalyzer(IDiskAnalyzer):
     def get_partitions(self) -> list[DiskPartition]:
-        result = []
+        # Deduplicate by device: btrfs subvolumes share a device but report
+        # identical usage — keep the shortest (most canonical) mountpoint.
+        seen: dict[str, DiskPartition] = {}
         for part in psutil.disk_partitions(all=False):
             try:
                 usage = psutil.disk_usage(part.mountpoint)
-                result.append(DiskPartition(
-                    device=part.device,
-                    mountpoint=part.mountpoint,
-                    total=usage.total,
-                    used=usage.used,
-                    free=usage.free,
-                    percent=usage.percent,
-                ))
             except PermissionError:
                 continue
-        return result
+            entry = DiskPartition(
+                device=part.device,
+                mountpoint=part.mountpoint,
+                total=usage.total,
+                used=usage.used,
+                free=usage.free,
+                percent=usage.percent,
+            )
+            existing = seen.get(part.device)
+            if existing is None or len(part.mountpoint) < len(existing.mountpoint):
+                seen[part.device] = entry
+        return list(seen.values())
 
     def get_large_dirs(self, path: str, limit: int = 10) -> list[DirSize]:
         try:

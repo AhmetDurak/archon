@@ -1,7 +1,8 @@
-from PySide6.QtCore import Qt, QThread, Signal, QProcess
+from PySide6.QtCore import QThread, Signal, QProcess
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
-    QTableWidgetItem, QPushButton, QDialog, QTextEdit, QDialogButtonBox
+    QTableWidgetItem, QPushButton, QDialog, QTextEdit
 )
 
 from os_optimizer.core.interfaces import IPackageManager
@@ -132,7 +133,7 @@ class PackagesView(QWidget):
             self._table.setItem(i, 0, QTableWidgetItem(pkg.name))
             self._table.setItem(i, 1, QTableWidgetItem(pkg.current))
             item = QTableWidgetItem(pkg.available)
-            item.setForeground(Qt.GlobalColor.green)
+            item.setForeground(QColor("#a6e3a1"))
             self._table.setItem(i, 2, item)
 
         count = len(packages)
