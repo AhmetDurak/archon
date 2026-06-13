@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 
 from os_optimizer.core.interfaces import IPackageManager, InstalledApp
+from os_optimizer.sudo_session import SudoSession
 from os_optimizer.ui import strings
 
 
@@ -39,11 +40,11 @@ class _AppsWorker(QThread):
 
 
 class AppsView(QWidget):
-    def __init__(self, manager: IPackageManager, parent=None):
+    def __init__(self, manager: IPackageManager, sudo_session: SudoSession, parent=None):
         super().__init__(parent)
         self._manager = manager
+        self._sudo = sudo_session
         self._worker: _AppsWorker | None = None
-        self._all_apps: list[InstalledApp] = []
         self._setup_ui()
         self._fetch()
 
@@ -79,21 +80,23 @@ class AppsView(QWidget):
         toolbar.addWidget(self._refresh_btn)
         root.addLayout(toolbar)
 
-        self._table = QTableWidget(0, 4)
+        self._table = QTableWidget(0, 5)
         self._table.setHorizontalHeaderLabels([
             s.apps_col_name,
             s.apps_col_version,
             s.apps_col_size,
             s.apps_col_desc,
+            s.apps_col_action,
         ])
         hdr = self._table.horizontalHeader()
         hdr.setSectionResizeMode(0, hdr.ResizeMode.Interactive)
         hdr.setSectionResizeMode(1, hdr.ResizeMode.Interactive)
         hdr.setSectionResizeMode(2, hdr.ResizeMode.Interactive)
         hdr.setSectionResizeMode(3, hdr.ResizeMode.Stretch)
+        hdr.setSectionResizeMode(4, hdr.ResizeMode.ResizeToContents)
         hdr.setStretchLastSection(False)
         self._table.setColumnWidth(0, 200)
-        self._table.setColumnWidth(1, 120)
+        self._table.setColumnWidth(1, 110)
         self._table.setColumnWidth(2, 120)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -101,7 +104,6 @@ class AppsView(QWidget):
         self._table.setSortingEnabled(True)
         self._table.setWordWrap(False)
         self._table.verticalHeader().setDefaultSectionSize(32)
-        # default sort: size descending
         self._table.sortByColumn(2, Qt.SortOrder.DescendingOrder)
         root.addWidget(self._table)
 
@@ -113,7 +115,6 @@ class AppsView(QWidget):
         self._search.setEnabled(False)
         self._status.setText(s.apps_loading)
         self._table.setRowCount(0)
-        self._all_apps = []
 
         self._worker = _AppsWorker(self._manager)
         self._worker.done.connect(self._on_done)
@@ -121,7 +122,6 @@ class AppsView(QWidget):
 
     def _on_done(self, apps: list[InstalledApp]):
         s = strings.get()
-        self._all_apps = apps
         self._refresh_btn.setEnabled(True)
         self._search.setEnabled(True)
 
@@ -137,10 +137,43 @@ class AppsView(QWidget):
             size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self._table.setItem(i, 2, size_item)
             self._table.setItem(i, 3, QTableWidgetItem(app.description))
+
+            btn = QPushButton(s.apps_remove_btn)
+            btn.setObjectName("danger-table-btn")
+            btn.clicked.connect(
+                lambda _, cmd=f"sudo pacman -Rns --noconfirm {app.name}": self._remove(cmd)
+            )
+            self._table.setCellWidget(i, 4, btn)
+
         self._table.setSortingEnabled(True)
         self._table.sortByColumn(2, Qt.SortOrder.DescendingOrder)
-
         self._filter(self._search.text())
+
+    def _remove(self, command: str):
+        from os_optimizer.ui.fix_dialog import FixDialog
+        btn = self.sender()
+        row = next(
+            (r for r in range(self._table.rowCount()) if self._table.cellWidget(r, 4) is btn),
+            -1,
+        )
+        dlg = FixDialog(command, self._sudo, self)
+        if dlg.exec():
+            if row != -1:
+                self._table.removeRow(row)
+            self._update_status()
+            # Re-fetch: pacman may have also removed orphaned dependencies
+            self._fetch()
+
+    def _update_status(self):
+        s = strings.get()
+        total = sum(
+            self._table.item(r, 2)._raw
+            for r in range(self._table.rowCount())
+            if isinstance(self._table.item(r, 2), _SizeItem)
+        )
+        self._status.setText(
+            s.apps_n_packages.format(n=self._table.rowCount(), size=_fmt_bytes(total))
+        )
 
     def _filter(self, text: str):
         query = text.strip().lower()

@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
         self._disk_view = DiskView(disk)
         self._packages_view = PackagesView(packages, sudo_session)
         self._health_view = HealthView(health, sudo_session)
-        self._apps_view = AppsView(packages)
+        self._apps_view = AppsView(packages, sudo_session)
 
         self._stack.addWidget(self._dashboard)
         self._stack.addWidget(self._disk_view)

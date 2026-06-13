@@ -166,6 +166,26 @@ QPushButton#table-btn:disabled {
     color: #6c7086;
 }
 
+/* Compact danger button for table cells (e.g. Remove in apps view) */
+QPushButton#danger-table-btn {
+    background-color: transparent;
+    color: #f38ba8;
+    border: 1px solid #f38ba8;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+QPushButton#danger-table-btn:hover {
+    background-color: #f38ba820;
+}
+
+QPushButton#danger-table-btn:disabled {
+    color: #45475a;
+    border-color: #45475a;
+}
+
 QPushButton#primary-btn:hover {
     background-color: #b4d0ff;
 }
