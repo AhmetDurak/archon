@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Catppuccin Mocha: OS Optimizer icon — CPU chip + health pulse -->
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="16" fill="#181825"/>
+
+  <!-- Chip body -->
+  <rect x="14" y="14" width="36" height="36" rx="5" fill="#313244" stroke="#45475a" stroke-width="1.5"/>
+
+  <!-- Inner die -->
+  <rect x="20" y="20" width="24" height="24" rx="3" fill="#1e1e2e"/>
+
+  <!-- Pins — left -->
+  <rect x="8"  y="21" width="6" height="3" rx="1.5" fill="#45475a"/>
+  <rect x="8"  y="30" width="6" height="3" rx="1.5" fill="#45475a"/>
+  <rect x="8"  y="39" width="6" height="3" rx="1.5" fill="#45475a"/>
+
+  <!-- Pins — right -->
+  <rect x="50" y="21" width="6" height="3" rx="1.5" fill="#45475a"/>
+  <rect x="50" y="30" width="6" height="3" rx="1.5" fill="#45475a"/>
+  <rect x="50" y="39" width="6" height="3" rx="1.5" fill="#45475a"/>
+
+  <!-- Pins — top -->
+  <rect x="21" y="8"  width="3" height="6" rx="1.5" fill="#45475a"/>
+  <rect x="30" y="8"  width="3" height="6" rx="1.5" fill="#45475a"/>
+  <rect x="39" y="8"  width="3" height="6" rx="1.5" fill="#45475a"/>
+
+  <!-- Pins — bottom -->
+  <rect x="21" y="50" width="3" height="6" rx="1.5" fill="#45475a"/>
+  <rect x="30" y="50" width="3" height="6" rx="1.5" fill="#45475a"/>
+  <rect x="39" y="50" width="3" height="6" rx="1.5" fill="#45475a"/>
+
+  <!-- Health pulse line through the die -->
+  <polyline
+    points="20,32 23,32 25,23 28,41 31,26 33,36 36,32 44,32"
+    fill="none" stroke="#89b4fa" stroke-width="2.5"
+    stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Green status dot (top-right) -->
+  <circle cx="54" cy="10" r="6"  fill="#181825"/>
+  <circle cx="54" cy="10" r="4.5" fill="#a6e3a1"/>
+</svg>

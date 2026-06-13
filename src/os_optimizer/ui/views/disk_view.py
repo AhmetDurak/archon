@@ -10,6 +10,18 @@ from os_optimizer.core.interfaces import IDiskAnalyzer, DiskPartition
 from os_optimizer.ui import strings
 
 
+class _SizeItem(QTableWidgetItem):
+    """Table item that sorts by raw byte value instead of display string."""
+    def __init__(self, display: str, raw_bytes: int):
+        super().__init__(display)
+        self._raw = raw_bytes
+
+    def __lt__(self, other: "QTableWidgetItem") -> bool:
+        if isinstance(other, _SizeItem):
+            return self._raw < other._raw
+        return super().__lt__(other)
+
+
 def _fmt_bytes(n: int) -> str:
     for unit in ("B", "KB", "MB", "GB", "TB"):
         if n < 1024:
@@ -153,13 +165,17 @@ class DiskView(QWidget):
 
         self._dirs_table = QTableWidget(0, 2)
         self._dirs_table.setHorizontalHeaderLabels([s.disk_col_path, s.disk_col_size])
-        self._dirs_table.horizontalHeader().setStretchLastSection(False)
-        self._dirs_table.horizontalHeader().setSectionResizeMode(
-            0, self._dirs_table.horizontalHeader().ResizeMode.Stretch
-        )
+        dh = self._dirs_table.horizontalHeader()
+        dh.setSectionResizeMode(0, dh.ResizeMode.Interactive)
+        dh.setSectionResizeMode(1, dh.ResizeMode.Interactive)
+        dh.setStretchLastSection(False)
+        dh.setDefaultSectionSize(200)
+        self._dirs_table.setColumnWidth(0, 480)
+        self._dirs_table.setColumnWidth(1, 120)
         self._dirs_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._dirs_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._dirs_table.setAlternatingRowColors(True)
+        self._dirs_table.setSortingEnabled(True)
         self._dirs_table.doubleClicked.connect(self._on_dir_double_clicked)
         root.addWidget(self._dirs_table)
 
@@ -212,14 +228,16 @@ class DiskView(QWidget):
 
     def _on_scan_done(self, dirs):
         self._scan_btn.setEnabled(True)
+        self._dirs_table.setSortingEnabled(False)
         self._dirs_table.setRowCount(len(dirs))
         for i, d in enumerate(dirs):
             self._dirs_table.setItem(i, 0, QTableWidgetItem(d.path))
-            size_item = QTableWidgetItem(_fmt_bytes(d.size))
+            size_item = _SizeItem(_fmt_bytes(d.size), d.size)
             size_item.setTextAlignment(
                 Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             )
             self._dirs_table.setItem(i, 1, size_item)
+        self._dirs_table.setSortingEnabled(True)
 
     def _on_dir_double_clicked(self, index):
         path_item = self._dirs_table.item(index.row(), 0)

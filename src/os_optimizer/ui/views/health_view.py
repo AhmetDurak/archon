@@ -74,13 +74,17 @@ class HealthView(QWidget):
         ])
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(0, header.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, header.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, header.ResizeMode.Interactive)
         header.setSectionResizeMode(2, header.ResizeMode.Stretch)
-        header.setSectionResizeMode(3, header.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, header.ResizeMode.Interactive)
         header.setSectionResizeMode(4, header.ResizeMode.ResizeToContents)
+        header.setStretchLastSection(False)
+        self._table.setColumnWidth(1, 180)
+        self._table.setColumnWidth(3, 240)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._table.setAlternatingRowColors(True)
+        self._table.setSortingEnabled(True)
         self._table.setWordWrap(False)
         self._table.verticalHeader().setDefaultSectionSize(36)
         root.addWidget(self._table)
@@ -100,6 +104,7 @@ class HealthView(QWidget):
     def _on_fetch_done(self, issues):
         s = strings.get()
         self._refresh_btn.setEnabled(True)
+        self._table.setSortingEnabled(False)
         self._table.setRowCount(len(issues))
 
         for i, issue in enumerate(issues):
@@ -118,10 +123,10 @@ class HealthView(QWidget):
             if issue.fix:
                 btn = QPushButton(s.health_fix_btn)
                 btn.setObjectName("table-btn")
-                btn.clicked.connect(
-                    lambda _, row=i, cmd=issue.fix: self._open_fix_dialog(row, cmd)
-                )
+                btn.clicked.connect(lambda _, cmd=issue.fix: self._open_fix_dialog(cmd))
                 self._table.setCellWidget(i, 4, btn)
+
+        self._table.setSortingEnabled(True)
 
         errors = sum(1 for iss in issues if iss.severity == "error")
         warnings = sum(1 for iss in issues if iss.severity == "warning")
@@ -136,11 +141,16 @@ class HealthView(QWidget):
 
         self.summary_ready.emit(len(issues))
 
-    def _open_fix_dialog(self, row: int, command: str):
+    def _open_fix_dialog(self, command: str):
         from os_optimizer.ui.fix_dialog import FixDialog
+        btn = self.sender()
+        row = next(
+            (r for r in range(self._table.rowCount()) if self._table.cellWidget(r, 4) is btn),
+            -1,
+        )
         dlg = FixDialog(command, self._sudo, self)
         if dlg.exec():
-            # Remove the row immediately for instant feedback, then re-scan to verify
-            self._table.removeRow(row)
+            if row != -1:
+                self._table.removeRow(row)
             self.summary_ready.emit(self._table.rowCount())
             self._fetch()

@@ -20,7 +20,6 @@ QMainWindow, QDialog, QWidget {
     color: #89b4fa;
     font-size: 15px;
     font-weight: bold;
-    padding: 20px 16px 12px 16px;
 }
 
 QPushButton#nav-btn {

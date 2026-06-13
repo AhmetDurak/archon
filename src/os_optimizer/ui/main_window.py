@@ -1,8 +1,13 @@
+from pathlib import Path
+
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QLabel, QPushButton, QStackedWidget, QSizePolicy
 )
+
+_ICON_PATH = Path(__file__).parent.parent / "assets" / "icon.svg"
 
 from os_optimizer.core.interfaces import IDiskAnalyzer, IPackageManager, IHealthChecker
 from os_optimizer.sudo_session import SudoSession
@@ -26,6 +31,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(s.app_name)
         self.setMinimumSize(960, 640)
         self.resize(1100, 700)
+
+        if _ICON_PATH.exists():
+            self.setWindowIcon(QIcon(str(_ICON_PATH)))
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -74,9 +82,26 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
+        header = QHBoxLayout()
+        header.setContentsMargins(16, 16, 16, 12)
+        header.setSpacing(10)
+
+        if _ICON_PATH.exists():
+            icon_lbl = QLabel()
+            px = QPixmap(str(_ICON_PATH)).scaled(
+                32, 32,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            icon_lbl.setPixmap(px)
+            header.addWidget(icon_lbl)
+
         title = QLabel(s.app_name)
         title.setObjectName("app-title")
-        layout.addWidget(title)
+        title.setContentsMargins(0, 0, 0, 0)
+        header.addWidget(title)
+        header.addStretch()
+        layout.addLayout(header)
 
         nav_items = [
             (f"{s.nav_dashboard_icon}  {s.nav_dashboard}", 0),
