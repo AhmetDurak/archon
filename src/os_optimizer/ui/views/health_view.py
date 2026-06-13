@@ -117,10 +117,9 @@ class HealthView(QWidget):
 
             if issue.fix:
                 btn = QPushButton(s.health_fix_btn)
-                btn.setObjectName("primary-btn")
-                btn.setFixedHeight(28)
+                btn.setObjectName("table-btn")
                 btn.clicked.connect(
-                    lambda _, cmd=issue.fix: self._open_fix_dialog(cmd)
+                    lambda _, row=i, cmd=issue.fix: self._open_fix_dialog(row, cmd)
                 )
                 self._table.setCellWidget(i, 4, btn)
 
@@ -137,8 +136,11 @@ class HealthView(QWidget):
 
         self.summary_ready.emit(len(issues))
 
-    def _open_fix_dialog(self, command: str):
+    def _open_fix_dialog(self, row: int, command: str):
         from os_optimizer.ui.fix_dialog import FixDialog
         dlg = FixDialog(command, self._sudo, self)
         if dlg.exec():
+            # Remove the row immediately for instant feedback, then re-scan to verify
+            self._table.removeRow(row)
+            self.summary_ready.emit(self._table.rowCount())
             self._fetch()

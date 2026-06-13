@@ -147,6 +147,26 @@ QPushButton#primary-btn {
     font-size: 13px;
 }
 
+/* Compact button for use inside table cells */
+QPushButton#table-btn {
+    background-color: #89b4fa;
+    color: #1e1e2e;
+    border: none;
+    border-radius: 6px;
+    padding: 3px 14px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+QPushButton#table-btn:hover {
+    background-color: #b4d0ff;
+}
+
+QPushButton#table-btn:disabled {
+    background-color: #45475a;
+    color: #6c7086;
+}
+
 QPushButton#primary-btn:hover {
     background-color: #b4d0ff;
 }
