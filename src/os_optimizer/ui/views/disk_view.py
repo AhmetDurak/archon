@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QSizePolicy
 )
 
+import subprocess
+
 import psutil
 
 from os_optimizer.core.interfaces import IDiskAnalyzer, DiskPartition
@@ -110,11 +112,38 @@ class DirScanWorker(QThread):
         self.done.emit(self._analyzer.get_large_dirs(self._path))
 
 
+class _SubvolSizeWorker(QThread):
+    """Background du -sx scan for a single btrfs subvolume placeholder."""
+    done = Signal(str, int)  # path, total bytes (-1 on timeout/error)
+
+    def __init__(self, path: str):
+        super().__init__()
+        self._path = path
+
+    def run(self):
+        try:
+            result = subprocess.run(
+                ["du", "-sx", self._path],
+                capture_output=True, text=True, timeout=120,
+            )
+            for line in result.stdout.strip().splitlines():
+                cols = line.split("\t", 1)
+                if len(cols) == 2:
+                    self.done.emit(self._path, int(cols[0]) * 1024)
+                    return
+        except Exception:
+            pass
+        self.done.emit(self._path, -1)
+
+
 class DiskView(QWidget):
     def __init__(self, analyzer: IDiskAnalyzer, parent=None):
         super().__init__(parent)
         self._analyzer = analyzer
         self._worker = None
+        self._subvol_workers: list[_SubvolSizeWorker] = []
+        self._partition_used = 0
+        self._scan_gen = 0
         self._setup_ui()
         self._load_partitions()
 
@@ -221,6 +250,8 @@ class DiskView(QWidget):
     def _scan_dirs(self):
         if self._worker and self._worker.isRunning():
             return
+        self._cancel_subvol_workers()
+        self._scan_gen += 1
         self._scan_btn.setEnabled(False)
         self._dirs_table.setRowCount(0)
         path = self._path_combo.currentText()
@@ -232,34 +263,87 @@ class DiskView(QWidget):
         self._scan_btn.setEnabled(True)
         path = self._path_combo.currentText()
 
-        # Use partition's total used bytes as the denominator for %, so the
-        # user can see what fraction of the disk each entry accounts for.
         try:
-            partition_used = psutil.disk_usage(path).used
+            self._partition_used = psutil.disk_usage(path).used
         except OSError:
-            partition_used = 0
+            self._partition_used = 0
+
+        mounts = {p.mountpoint for p in psutil.disk_partitions(all=False)}
 
         self._dirs_table.setSortingEnabled(False)
         self._dirs_table.setRowCount(len(dirs))
         align_right = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        zero_paths: list[str] = []
+
         for i, d in enumerate(dirs):
             self._dirs_table.setItem(i, 0, QTableWidgetItem(d.path))
 
-            size_item = _SizeItem(_fmt_bytes(d.size), d.size)
+            # Btrfs subvolume placeholder: show "…" while background scan runs
+            is_subvol = d.size == 0 and d.path in mounts
+            if is_subvol:
+                size_item = _SizeItem("…", 0)
+                zero_paths.append(d.path)
+            else:
+                size_item = _SizeItem(_fmt_bytes(d.size), d.size)
             size_item.setTextAlignment(align_right)
             self._dirs_table.setItem(i, 1, size_item)
 
-            if d.size > 0 and partition_used > 0:
-                pct_str = f"{d.size / partition_used * 100:.1f} %"
-                pct_raw = d.size / partition_used * 100
+            if d.size > 0 and self._partition_used > 0:
+                pct_raw = d.size / self._partition_used * 100
+                pct_str = f"{pct_raw:.1f} %"
             else:
-                pct_str = "—"
                 pct_raw = 0.0
+                pct_str = "—"
             pct_item = _SizeItem(pct_str, int(pct_raw * 1000))
             pct_item.setTextAlignment(align_right)
             self._dirs_table.setItem(i, 2, pct_item)
 
         self._dirs_table.setSortingEnabled(True)
+
+        gen = self._scan_gen
+        for zero_path in zero_paths:
+            w = _SubvolSizeWorker(zero_path)
+            w.done.connect(lambda p, sz, g=gen: self._on_subvol_size(p, sz, g))
+            w.start()
+            self._subvol_workers.append(w)
+
+    def _cancel_subvol_workers(self):
+        for w in self._subvol_workers:
+            try:
+                w.done.disconnect()
+            except RuntimeError:
+                pass
+        self._subvol_workers.clear()
+
+    def _on_subvol_size(self, path: str, size: int, gen: int):
+        if gen != self._scan_gen:
+            return
+        size_str = _fmt_bytes(size) if size > 0 else "—"
+        self._update_subvol_row(path, size if size > 0 else 0, size_str)
+
+    def _update_subvol_row(self, path: str, size: int, size_str: str):
+        align_right = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        for row in range(self._dirs_table.rowCount()):
+            item = self._dirs_table.item(row, 0)
+            if item and item.text() == path:
+                self._dirs_table.setSortingEnabled(False)
+
+                size_item = _SizeItem(size_str, size)
+                size_item.setTextAlignment(align_right)
+                self._dirs_table.setItem(row, 1, size_item)
+
+                if size > 0 and self._partition_used > 0:
+                    pct_raw = size / self._partition_used * 100
+                    pct_str = f"{pct_raw:.1f} %"
+                else:
+                    pct_raw = 0.0
+                    pct_str = "—"
+                pct_item = _SizeItem(pct_str, int(pct_raw * 1000))
+                pct_item.setTextAlignment(align_right)
+                self._dirs_table.setItem(row, 2, pct_item)
+
+                self._dirs_table.setSortingEnabled(True)
+                break
 
     def _on_dir_double_clicked(self, index):
         path_item = self._dirs_table.item(index.row(), 0)

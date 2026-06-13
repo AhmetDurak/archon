@@ -64,6 +64,8 @@ class MainWindow(QMainWindow):
         self._health_count = 0
         self._packages_view.summary_ready.connect(self._on_pkg_count)
         self._health_view.summary_ready.connect(self._on_health_count)
+        self._apps_view.package_removed.connect(self._packages_view.refresh)
+        self._apps_view.package_removed.connect(self._health_view.refresh)
 
         self._nav_buttons[0].setChecked(True)
 

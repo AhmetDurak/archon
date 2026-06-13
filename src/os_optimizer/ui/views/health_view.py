@@ -141,6 +141,9 @@ class HealthView(QWidget):
 
         self.summary_ready.emit(len(issues))
 
+    def refresh(self):
+        self._fetch()
+
     def _open_fix_dialog(self, command: str):
         from os_optimizer.ui.fix_dialog import FixDialog
         btn = self.sender()

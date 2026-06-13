@@ -49,6 +49,8 @@ _C_ACTION  = 5
 
 
 class AppsView(QWidget):
+    package_removed = Signal()
+
     def __init__(self, manager: IPackageManager, sudo_session: SudoSession, parent=None):
         super().__init__(parent)
         self._manager = manager
@@ -182,6 +184,7 @@ class AppsView(QWidget):
                 self._table.removeRow(row)
             self._update_status()
             self._fetch()
+            self.package_removed.emit()
 
     def _update_status(self):
         s = strings.get()

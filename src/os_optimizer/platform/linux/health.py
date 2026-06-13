@@ -142,21 +142,27 @@ class LinuxHealthChecker(IHealthChecker):
         )]
 
     def _check_pacman_cache(self) -> list[HealthIssue]:
+        import re
         cache = Path("/var/cache/pacman/pkg")
         if not cache.exists():
             return []
         try:
             result = subprocess.run(
-                ["du", "-s", str(cache)], capture_output=True, text=True, timeout=10
+                ["paccache", "-dk1"],
+                capture_output=True, text=True, timeout=15,
             )
-            size_gb = int(result.stdout.split()[0]) / 1024 / 1024
-            if size_gb > 3:
+            output = result.stdout + result.stderr
+            if "no candidate" in output:
+                return []
+            m = re.search(r"(\d+)\s+candidates.*?disk space saved:\s*([^\)]+)", output)
+            if m:
+                count, saved = m.group(1), m.group(2).strip()
                 return [HealthIssue(
                     severity="info", category="config", path=str(cache),
-                    message=f"Pacman cache is {size_gb:.1f} GB",
-                    fix="sudo paccache -rk2",
+                    message=f"{count} old package versions cached ({saved} reclaimable)",
+                    fix="sudo paccache -rk1",
                 )]
-        except (FileNotFoundError, subprocess.TimeoutExpired, ValueError, IndexError):
+        except (FileNotFoundError, subprocess.TimeoutExpired, ValueError):
             pass
         return []
 

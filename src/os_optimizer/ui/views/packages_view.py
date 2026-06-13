@@ -114,6 +114,9 @@ class PackagesView(QWidget):
 
         self.summary_ready.emit(count)
 
+    def refresh(self):
+        self._fetch()
+
     def _run_update(self):
         dlg = UpdateDialog(self._pm.get_update_command(), self._sudo, self)
         dlg.exec()
