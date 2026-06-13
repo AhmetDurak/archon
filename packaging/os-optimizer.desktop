@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=OS Optimizer
+Comment=System health monitor and optimizer
+Exec=os-optimizer
+Icon=os-optimizer
+Terminal=false
+Type=Application
+Categories=System;Monitor;
+Keywords=system;optimizer;health;packages;disk;arch;
+StartupNotify=true

@@ -1,0 +1,37 @@
+# Maintainer: Ahmet Durak <durakahmet049@gmail.com>
+pkgname=os-optimizer-git
+pkgver=r1.0000000
+pkgrel=1
+pkgdesc="System health monitor and optimizer with a native desktop GUI"
+arch=('x86_64')
+url="https://github.com/ahmetdrk/os-optimizer"
+license=('MIT')
+depends=('python' 'python-pyside6' 'python-psutil' 'pacman-contrib')
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'git')
+provides=('os-optimizer')
+conflicts=('os-optimizer')
+source=("git+${url}.git")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd os-optimizer
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+    cd os-optimizer
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd os-optimizer
+    python -m installer --destdir="$pkgdir" dist/*.whl
+
+    # Icon for the system app launcher
+    install -Dm644 src/os_optimizer/assets/icon.svg \
+        "$pkgdir/usr/share/pixmaps/os-optimizer.svg"
+
+    # Desktop entry
+    install -Dm644 packaging/os-optimizer.desktop \
+        "$pkgdir/usr/share/applications/os-optimizer.desktop"
+}
