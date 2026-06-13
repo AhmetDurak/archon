@@ -60,6 +60,7 @@ class AppStrings:
     disk_scan_btn: str
     disk_col_path: str
     disk_col_size: str
+    disk_col_pct: str
     disk_dblclick_hint: str
     disk_chart_used: str
     disk_chart_free: str
@@ -172,7 +173,8 @@ EN = AppStrings(
     disk_scan_btn="Scan",
     disk_col_path="Path",
     disk_col_size="Size",
-    disk_dblclick_hint="Double-click a row to drill into that directory",
+    disk_col_pct="% of Disk",
+    disk_dblclick_hint="Double-click a row to drill in  ·  Btrfs subvolumes show — until drilled into",
     disk_chart_used="Used",
     disk_chart_free="Free",
 
@@ -281,7 +283,8 @@ DE = AppStrings(
     disk_scan_btn="Scannen",
     disk_col_path="Pfad",
     disk_col_size="Größe",
-    disk_dblclick_hint="Doppelklick auf eine Zeile zum Einsteigen",
+    disk_col_pct="% der Disk",
+    disk_dblclick_hint="Doppelklick zum Einsteigen  ·  Btrfs-Subvolumes zeigen — bis zum Einsteigen",
     disk_chart_used="Belegt",
     disk_chart_free="Frei",
 
@@ -390,7 +393,8 @@ TR = AppStrings(
     disk_scan_btn="Tara",
     disk_col_path="Yol",
     disk_col_size="Boyut",
-    disk_dblclick_hint="Bir satıra çift tıklayarak o klasöre girin",
+    disk_col_pct="Disk %'si",
+    disk_dblclick_hint="Klasöre girmek için çift tıklayın  ·  Btrfs alt birimleri girilene kadar — gösterir",
     disk_chart_used="Kullanılan",
     disk_chart_free="Boş",
 

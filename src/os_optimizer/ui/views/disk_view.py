@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QSizePolicy
 )
 
+import psutil
+
 from os_optimizer.core.interfaces import IDiskAnalyzer, DiskPartition
 from os_optimizer.ui import strings
 
@@ -163,15 +165,15 @@ class DiskView(QWidget):
         dir_header.addStretch()
         root.addLayout(dir_header)
 
-        self._dirs_table = QTableWidget(0, 2)
-        self._dirs_table.setHorizontalHeaderLabels([s.disk_col_path, s.disk_col_size])
+        self._dirs_table = QTableWidget(0, 3)
+        self._dirs_table.setHorizontalHeaderLabels([s.disk_col_path, s.disk_col_size, s.disk_col_pct])
         dh = self._dirs_table.horizontalHeader()
-        dh.setSectionResizeMode(0, dh.ResizeMode.Interactive)
+        dh.setSectionResizeMode(0, dh.ResizeMode.Stretch)
         dh.setSectionResizeMode(1, dh.ResizeMode.Interactive)
+        dh.setSectionResizeMode(2, dh.ResizeMode.Interactive)
         dh.setStretchLastSection(False)
-        dh.setDefaultSectionSize(200)
-        self._dirs_table.setColumnWidth(0, 480)
-        self._dirs_table.setColumnWidth(1, 120)
+        self._dirs_table.setColumnWidth(1, 110)
+        self._dirs_table.setColumnWidth(2, 80)
         self._dirs_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._dirs_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._dirs_table.setAlternatingRowColors(True)
@@ -228,15 +230,35 @@ class DiskView(QWidget):
 
     def _on_scan_done(self, dirs):
         self._scan_btn.setEnabled(True)
+        path = self._path_combo.currentText()
+
+        # Use partition's total used bytes as the denominator for %, so the
+        # user can see what fraction of the disk each entry accounts for.
+        try:
+            partition_used = psutil.disk_usage(path).used
+        except OSError:
+            partition_used = 0
+
         self._dirs_table.setSortingEnabled(False)
         self._dirs_table.setRowCount(len(dirs))
+        align_right = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
         for i, d in enumerate(dirs):
             self._dirs_table.setItem(i, 0, QTableWidgetItem(d.path))
+
             size_item = _SizeItem(_fmt_bytes(d.size), d.size)
-            size_item.setTextAlignment(
-                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-            )
+            size_item.setTextAlignment(align_right)
             self._dirs_table.setItem(i, 1, size_item)
+
+            if d.size > 0 and partition_used > 0:
+                pct_str = f"{d.size / partition_used * 100:.1f} %"
+                pct_raw = d.size / partition_used * 100
+            else:
+                pct_str = "—"
+                pct_raw = 0.0
+            pct_item = _SizeItem(pct_str, int(pct_raw * 1000))
+            pct_item.setTextAlignment(align_right)
+            self._dirs_table.setItem(i, 2, pct_item)
+
         self._dirs_table.setSortingEnabled(True)
 
     def _on_dir_double_clicked(self, index):
