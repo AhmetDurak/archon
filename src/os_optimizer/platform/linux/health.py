@@ -138,7 +138,7 @@ class LinuxHealthChecker(IHealthChecker):
         return [HealthIssue(
             severity="info", category="package", path="pacman",
             message=f"{len(pkgs)} orphaned package(s) installed: {preview}",
-            fix="sudo pacman -Rns $(pacman -Qtdq)",
+            fix="sudo pacman -Rns --noconfirm $(pacman -Qtdq)",
         )]
 
     def _check_pacman_cache(self) -> list[HealthIssue]:
@@ -154,7 +154,7 @@ class LinuxHealthChecker(IHealthChecker):
                 return [HealthIssue(
                     severity="info", category="config", path=str(cache),
                     message=f"Pacman cache is {size_gb:.1f} GB",
-                    fix="paccache -rk2  # keeps last 2 versions per package",
+                    fix="sudo paccache -rk2",
                 )]
         except (FileNotFoundError, subprocess.TimeoutExpired, ValueError, IndexError):
             pass
